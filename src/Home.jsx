@@ -7,7 +7,6 @@ function Home() {
     <>
       <div className="Home">
         <header className="Nav-Bar">
-          
         </header>
       </div>
       <div className="grid lg:grid-cols-2 grid-cols-1 gap-4 bg-emerald-800/75 place-content-center px-8 py-8 shadow-xl">
