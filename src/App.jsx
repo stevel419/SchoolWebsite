@@ -1,15 +1,25 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Home from './Home.jsx';
 import About from './About.jsx';
+import Header from './Header.jsx';
+import Footer from './Footer.jsx';
+import Accomplishments from './Accomplishments.jsx';
+import Offer from './Offer.jsx';
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/about" element={<About />} />
-      </Routes>
-    </Router>
+      <div>
+        <Header />
+        <main>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/About" element={<About />} />
+            <Route path="/Accomplishments" element={<Accomplishments />} />
+            <Route path="/Offer" element={<Offer />} />
+          </Routes>
+        </main>
+        <Footer />
+      </div>
   );
 }
 
