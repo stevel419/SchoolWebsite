@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 function About() {
     return (
         <>
@@ -31,6 +33,7 @@ function About() {
                 initiated advanced level wing in 1984, with four combinations of HGE, HGL, HKL and EGM.
                 </p>
             </div>
+            <Link to="/home">Back to home →</Link>
         </>
     );
 }

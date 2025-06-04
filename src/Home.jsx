@@ -1,4 +1,6 @@
 import { Link } from "react-router-dom";
+import Offer from './Offer';
+import Accomp from './Accomplishments';
 
 function Home() {
   return (
@@ -29,6 +31,8 @@ function Home() {
         </p>
         <Link to="/about"> → Learn more</Link>
       </div>
+      <Offer />
+      <Accomp />
     </>
   );
 }
