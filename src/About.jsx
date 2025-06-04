@@ -33,7 +33,7 @@ function About() {
                 initiated advanced level wing in 1984, with four combinations of HGE, HGL, HKL and EGM.
                 </p>
             </div>
-            <Link to="/home">Back to home →</Link>
+            <Link to="/">Back to home →</Link>
         </>
     );
 }
