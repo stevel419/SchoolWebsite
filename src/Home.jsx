@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import Offer from './Offer';
 import Accomp from './Accomplishments';
+import Landing from "./Landing";
 
 function Home() {
   return (
@@ -9,6 +10,7 @@ function Home() {
         <header className="Nav-Bar">
         </header>
       </div>
+      <Landing />
       <div className="grid lg:grid-cols-2 grid-cols-1 gap-4 bg-emerald-800/75 place-content-center px-8 py-8 shadow-xl">
         <div className="p-4 rounded-xl border-2 border-black bg-white text-black">
           <h2 className="font-sans text-2xl font-bold text-emerald-700 uppercase">Our Mission</h2>
