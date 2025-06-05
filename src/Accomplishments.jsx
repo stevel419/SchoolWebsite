@@ -3,7 +3,7 @@ import { faArrowUp } from '@fortawesome/free-solid-svg-icons';
 
 function Accomp() {
     return (
-        <div className="py-10">
+        <div className="py-10 shadow-xl">
             <h2 className="flex justify-center pt-10 font-bold text-3xl uppercase">Our Achievements</h2>
             <div className="flex flex-col lg:flex-row gap-5 px-10 py-10">
                 <div className="text-center flex-1 relative">
