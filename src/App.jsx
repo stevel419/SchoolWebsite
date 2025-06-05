@@ -5,6 +5,8 @@ import Header from './Header.jsx';
 import Footer from './Footer.jsx';
 import Accomplishments from './Accomplishments.jsx';
 import Offer from './Offer.jsx';
+import Admission from './Admission.jsx';
+import Academics from './Academics.jsx';
 
 function App() {
   return (
@@ -16,6 +18,8 @@ function App() {
             <Route path="/About" element={<About />} />
             <Route path="/Accomplishments" element={<Accomplishments />} />
             <Route path="/Offer" element={<Offer />} />
+            <Route path="/Admission" element={<Admission />} />
+            <Route path="/Academics" element={<Academics />} />
           </Routes>
         </main>
         <Footer />
