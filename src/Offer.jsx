@@ -47,18 +47,18 @@ function Offer() {
     const [openMenu3, setOpenMenu3] = useState(false);
 
     return (
-        <div className="bg-emerald-700/75">
-            <h2 className="flex justify-center pt-10 font-bold text-2xl uppercase">What we offer</h2>
+        <div className="bg-emerald-700/75 py-10">
+            <h2 className="flex justify-center pt-10 font-bold text-3xl uppercase">What we offer</h2>
             <div className="flex flex-col lg:flex-row gap-10 px-10 py-10 lg:items-start">
-                <div className="border-y-2 p-4 rounded-xl bg-white flex-1">
+                <div className="border-y-2 p-4 rounded-xl bg-white flex-1 text-lg">
                     <button onClick={() => setOpenMenu1((prev) => !prev)} 
                     className="flex justify-between items-center w-full text-left font-bold text-emerald-700">
-                        <span>Holistic Formation (Mind, Body, and Soul)</span>
+                        <span>Holistic Formation</span>
                         <span className="text-right text-xl">{ openMenu1 ? '-' : '+' }</span>
                     </button>
                     { openMenu1 && <OfferContents1 /> }
                 </div>
-                <div className="border-y-2 p-4 rounded-xl bg-white flex-1">
+                <div className="border-y-2 p-4 rounded-xl bg-white flex-1 text-lg">
                     <button onClick={() => setOpenMenu2((prev) => !prev)}
                     className="flex justify-between items-center w-full text-left font-bold text-emerald-700">
                         <span>Discipline and Respect for Authority</span>
@@ -66,10 +66,10 @@ function Offer() {
                     </button>
                     { openMenu2 && <OfferContents2 /> }
                 </div>
-                <div className="border-y-2 p-4 rounded-xl bg-white flex-1">
+                <div className="border-y-2 p-4 rounded-xl bg-white flex-1 text-lg">
                     <button onClick={() => setOpenMenu3((prev) => !prev)}
                     className="flex justify-between items-center w-full text-left font-bold text-emerald-700">
-                        <span>Safe and Nurturing Environment</span>
+                        <span className="text-lg">Safe and Nurturing Environment</span>
                         <span className="text-right text-xl">{ openMenu3 ? '-' : '+' }</span>
                     </button>
                     { openMenu3 && <OfferContents3 /> }
