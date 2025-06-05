@@ -47,7 +47,7 @@ function Offer() {
     const [openMenu3, setOpenMenu3] = useState(false);
 
     return (
-        <div className="bg-emerald-700/75 py-10">
+        <div className="bg-emerald-700/75 py-10 shadow-xl">
             <h2 className="flex justify-center pt-10 font-bold text-3xl uppercase">What we offer</h2>
             <div className="flex flex-col lg:flex-row gap-10 px-10 py-10 lg:items-start">
                 <div className="border-y-2 p-4 rounded-xl bg-white flex-1 text-lg">

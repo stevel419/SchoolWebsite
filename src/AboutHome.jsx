@@ -13,7 +13,7 @@ function AboutHome() {
                 </p>
                 <Link to="/about" className="text-emerald-700 font-semibold text-xl hover:underline hover:text-emerald-500">LEARN MORE →</Link>
             </div>
-            <div className="p-4 rounded-xl border-2 border-black bg-emerald-700/50 text-black">
+            <div className="p-4 rounded-xl border-2 border-emerald-700 border-dashed text-black text-center">
                 <h2 className="font-sans text-3xl font-bold text-black uppercase pb-4">Our Mission</h2>
                 <p className="text-lg">
                 Kigurunyembe secondary school is a church-based school that intends to provide high quality
@@ -21,7 +21,7 @@ function AboutHome() {
                 situations.
                 </p>
             </div>
-            <div className="p-4 rounded-xl border-2 border-black bg-emerald-700/50 text-black">
+            <div className="p-4 rounded-xl border-2 border-emerald-700 border-dashed text-black text-center">
                 <h2 className="font-sans text-3xl font-bold text-black uppercase pb-4">Our Vision</h2>
                 <p className="text-lg">
                 Kigurunyembe secondary school will stand at the highest position in giving high quality education
