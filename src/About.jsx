@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import Values from "./Values.jsx";
 
 function About() {
     return (
@@ -41,6 +42,7 @@ function About() {
                     that enables its scholars to become effective and functional citizens spiritually, economic and social.
                     </p>
                 </div>
+                <Values />
             </section>
             <Link to="/">Back to home →</Link>
         </section>
