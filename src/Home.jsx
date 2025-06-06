@@ -3,6 +3,7 @@ import Offer from './Offer';
 import Accomp from './Accomplishments';
 import Landing from "./LandingHome";
 import Slideshow from './Slideshow';
+import Calendar from './Calendar';
 
 function Home() {
   return (
@@ -11,6 +12,7 @@ function Home() {
       <AboutHome />
       <Offer />
       <Accomp />
+      <Calendar />
       <Slideshow/>
     </>
   );
