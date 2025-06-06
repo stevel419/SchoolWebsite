@@ -2,11 +2,11 @@ import React from 'react';
 
 const Values = () => {
   return (
-    <div className="flex justify-center items-center py-10 px-4 bg-white">
+    <div className="lg:w-[40%] h-full flex justify-center">
       <img
         src="/valuesGraphic.png"
         alt="Core Values Graphic"
-        className="max-w-full md:max-w-lg h-auto shadow-lg rounded-xl"
+        className="max-w-full md:max-w-lg h-auto rounded-xl"
       />
     </div>
   );
