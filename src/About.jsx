@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import Values from "./Values.jsx";
 
 function About() {
     return (
@@ -34,6 +35,7 @@ function About() {
                 </p>
             </div>
             <Link to="/">Back to home →</Link>
+            <Values />
         </>
     );
 }
