@@ -1,12 +1,13 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Home from './Home.jsx';
-import About from './About.jsx';
-import Header from './Header.jsx';
-import Footer from './Footer.jsx';
-import Accomplishments from './Accomplishments.jsx';
-import Offer from './Offer.jsx';
-import Admission from './Admission.jsx';
-import Academics from './Academics.jsx';
+import Home from './components/Home.jsx';
+import About from './components/About.jsx';
+import Header from './components/Header.jsx';
+import Footer from './components/Footer.jsx';
+import Accomplishments from './components/Accomplishments.jsx';
+import Offer from './components/Offer.jsx';
+import Admission from './components/Admission.jsx';
+import Academics from './components/Academics.jsx';
+import Portal from './Portal.jsx';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
             <Route path="/Offer" element={<Offer />} />
             <Route path="/Admission" element={<Admission />} />
             <Route path="/Academics" element={<Academics />} />
+            <Route path="/Portal" element={<Portal />} />
           </Routes>
         </main>
         <Footer />

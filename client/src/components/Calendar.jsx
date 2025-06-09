@@ -9,11 +9,10 @@ const Calendar = () => {
         
         <div className="w-full aspect-video rounded-lg overflow-hidden shadow-lg">
           <iframe
-            src = "https://calendar.google.com/calendar/embed?src=c_ddda415d8d6539a9384e4ab5d09268142982414f64ea8088557985dd06221bd7%40group.calendar.google.com&ctz=Africa%2FNairobi" width="800" height="600" frameborder="0"
+            src = "https://calendar.google.com/calendar/embed?src=c_ddda415d8d6539a9384e4ab5d09268142982414f64ea8088557985dd06221bd7%40group.calendar.google.com&ctz=Africa%2FNairobi" width="800" height="600" frameBorder="0"
             title="School Calendar"
             style={{ border: 0 }}
             className="w-full h-full"
-            frameBorder="0"
             scrolling="no"
           ></iframe>
         </div>
