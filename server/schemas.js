@@ -37,7 +37,8 @@ const teacherSchema = new mongoose.Schema({
 const studentSchema = new mongoose.Schema({
     admissionNum: {
         type: Number,
-        required: true
+        required: true,
+        unique: true
     },
     firstName: {
         type: String,
@@ -76,7 +77,11 @@ const studentSchema = new mongoose.Schema({
         required: true,
         min: 1,
         max: 6
-    }
+    },
+    subjects: [{
+        type: String,
+        required: true
+    }]
 }, {
     timestamps: true
 });
@@ -121,6 +126,11 @@ const attendanceSchema = new mongoose.Schema({
         type: Boolean,
         default: false,
         required: true
+    },
+    date: {
+        type: Date,
+        required: true,
+        default: Date.now
     }
 });
 
