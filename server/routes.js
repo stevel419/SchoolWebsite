@@ -178,7 +178,6 @@ router.get('/get-students', authenticateJWT, async (req, res) => {
     }
 });
 
-
 router.post('/save-student', authenticateJWT, async (req, res) => {
     try {
         const isAdmin = req.user.isAdmin;
