@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+git const mongoose = require('mongoose');
 
 const teacherSchema = new mongoose.Schema({
     firstName: {
