@@ -64,4 +64,122 @@ router.post('/login', async (req, res) => {
     }
 });
 
+router.get('/get-students', authenticateJWT, async (req, res) => {
+    try {
+      const isAdmin = req.user.isAdmin;
+      const teacherId = req.user.teacherId;
+  
+      let students;
+  
+      if (isAdmin) {
+        students = await Student.find();
+      } 
+      
+      else {
+        const teacher = await Teacher.findById(teacherId);
+        if (!teacher) {
+          return res.status(404).json({ error: "Teacher not found" });
+        }
+        const subject = teacher.subject;
+  
+        students = await Student.find({
+          subjects: { $in: [subject] }
+        });
+      }
+  
+      const fullStudents = await Promise.all(
+        students.map(async (student) => {
+          const filters = { student: student._id };
+          if (!isAdmin) filters.teacher = teacherId;
+  
+          const [grades, attendance, comments] = await Promise.all([
+            Grade.find(filters),
+            Attendance.find(filters),
+            Comment.find(filters)
+          ]);
+  
+          return {
+            ...student.toObject(),
+            grades,
+            attendance,
+            comments
+          };
+        })
+      );
+  
+      res.status(200).json(fullStudents);
+    } catch (e) {
+      console.error(e);
+      res.status(500).json({ error: "Failed to fetch students" });
+    }
+  });
+  
+
+
+  router.get('/search-students', authenticateJWT, async (req, res) => {
+    try {
+        const isAdmin = req.user.isAdmin;
+        const teacherId = req.user.teacherId;
+        const searchTerm = req.query.name;
+
+        if (!searchTerm) {
+            return res.status(400).json({ error: "Missing search term" });
+        }
+
+        // Case-insensitive regex search on first or last name
+        const nameFilter = {
+            $or: [
+                { firstName: { $regex: searchTerm, $options: 'i' } },
+                { lastName: { $regex: searchTerm, $options: 'i' } }
+            ]
+        };
+
+        if (isAdmin) {
+            const students = await Student.find(nameFilter);
+
+            const enriched = await Promise.all(students.map(async (student) => {
+                const [grades, attendance, comments] = await Promise.all([
+                    Grade.find({ student: student._id }),
+                    Attendance.find({ student: student._id }),
+                    Comment.find({ student: student._id })
+                ]);
+
+                return { ...student.toObject(), grades, attendance, comments };
+            }));
+
+            return res.status(200).json(enriched);
+        } else {
+            const teacher = await Teacher.findById(teacherId);
+            if (!teacher) {
+                return res.status(404).json({ error: "Teacher not found" });
+            }
+
+            const subject = teacher.subject;
+
+            const students = await Student.find({
+                ...nameFilter,
+                subjects: { $in: [subject] }
+            });
+
+            const enriched = await Promise.all(students.map(async (student) => {
+                const [grades, attendance, comments] = await Promise.all([
+                    Grade.find({ student: student._id, teacher: teacherId }),
+                    Attendance.find({ student: student._id, teacher: teacherId }),
+                    Comment.find({ student: student._id, teacher: teacherId })
+                ]);
+
+                return { ...student.toObject(), grades, attendance, comments };
+            }));
+
+            return res.status(200).json(enriched);
+        }
+
+    } catch (e) {
+        console.error(e);
+        return res.status(500).json({ error: "Failed to search students" });
+    }
+});
+
+
+
 module.exports = router;
