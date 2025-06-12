@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import Home from './components/Home.jsx';
 import About from './components/About.jsx';
 import Header from './components/Header.jsx';
@@ -13,14 +13,12 @@ import PortalSignup from "./PortalSignup.jsx";
 import Portal from "./Portal.jsx";
 import PortalHeader from './PortalHeader.jsx';
 import StudentRecords from "./StudentRecords.jsx";
-import { useLocation } from "react-router-dom";
-
 
 function App() {
   const location = useLocation();
 
   const isPortalRoute = location.pathname.startsWith("/Portal") || 
-  ["/Admission", "/Academics", "/Attendance", "/ExamResults"].includes(location.pathname);
+  ["/StudentRecords", "/Academics", "/Attendance", "/ExamResults"].includes(location.pathname);
 
   return (
       <div>

@@ -46,8 +46,8 @@ const StudentForm = () => {
                 admissionNum: Number(admissionNum), 
                 firstName, 
                 lastName, 
-                DOB: new Date(DOB), 
-                sex, 
+                dateOfBirth: new Date(DOB), 
+                gender: sex, 
                 religion, 
                 guardian, 
                 address, 
@@ -61,7 +61,7 @@ const StudentForm = () => {
                     'Content-Type': 'application/json',
                     'Authorization': 'Bearer ' + token
                 },
-                body: studentData
+                body: JSON.stringify(studentData)
             });
 
             const data = await res.json();
@@ -342,7 +342,7 @@ function StudentRecords() {
                             required
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            placeholder="Search by student name, admission number, or form..."
+                            placeholder="Search by student name"
                             className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition duration-200"
                         />
                     </div>

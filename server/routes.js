@@ -177,70 +177,79 @@ router.get('/get-students', authenticateJWT, async (req, res) => {
 });
 
 router.post('/save-student', authenticateJWT, async (req, res) => {
+    const session = await Student.startSession();
+    session.startTransaction();
+
     try {
         const isAdmin = req.user.isAdmin;
-        const teacherId = req.user.teacherId;
-        if (isAdmin) {
-            const { admissionNum, firstName, lastName, dateOfBirth, gender, religion, guardian, address, form, subjects } = req.body;
-
-            const existingStudent = await Student.findOne({ admissionNum: admissionNum });
-            if (existingStudent) {
-                return res.status(400).json({ error: "Student already exists" });
-            }
-
-            const student = new Student({
-                admissionNum,
-                firstName,
-                lastName,
-                dateOfBirth,
-                gender,
-                religion,
-                guardian,
-                address,
-                form,
-                subjects
-            });
-
-            const savedStudent = await student.save();
-            
-            const allGrades = [];
-            const allAttendance = [];
-            const allComments = [];
-            for (const subject of subjects) {
-                const subjectTeacher = await Teacher.findOne({ subject: subject });
-                if (!subjectTeacher) {
-                    return res.status(400).json({ error: subject + " does not exist" });
-                }
-                for (const assessment of ['Midterm', 'Final']) {
-                    allGrades.push(new Grade({
-                        student: savedStudent._id,
-                        teacher: subjectTeacher._id,
-                        assessment,
-                        score: 0
-                    }));
-                }
-
-                allAttendance.push(new Attendance({
-                    student: savedStudent._id,
-                    teacher: subjectTeacher._id
-                }));
-
-                allComments.push(new Comment({
-                    student: savedStudent._id,
-                    teacher: subjectTeacher._id,
-                    comment: ""
-                }));
-            }
-
-            await Grade.insertMany(allGrades);
-            await Attendance.insertMany(allAttendance);
-            await Comment.insertMany(allComments);
-
-            res.status(200).json({ message: "Student created successfully" });
-        } else {
+        if (!isAdmin) {
             return res.status(400).json({ error: "Please ask an admin to add student" });
         }
+
+        const { admissionNum, firstName, lastName, dateOfBirth, gender, religion, guardian, address, form, subjects } = req.body;
+
+        const existingStudent = await Student.findOne({ admissionNum }).session(session);
+        if (existingStudent) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(400).json({ error: "Student already exists" });
+        }
+
+        const student = new Student({
+            admissionNum,
+            firstName,
+            lastName,
+            dateOfBirth,
+            gender,
+            religion,
+            guardian,
+            address,
+            form,
+            subjects
+        });
+        const savedStudent = await student.save({ session });
+
+        const allGrades = [];
+        const allAttendance = [];
+        const allComments = [];
+
+        for (const subject of subjects) {
+            const subjectTeacher = await Teacher.findOne({ subject }).session(session);
+            if (!subjectTeacher) {
+                await session.abortTransaction();
+                session.endSession();
+                return res.status(400).json({ error: subject + " teacher does not exist" });
+            }
+            for (const assessment of ['Midterm', 'Final']) {
+                allGrades.push({
+                    student: savedStudent._id,
+                    teacher: subjectTeacher._id,
+                    assessment,
+                    score: 0
+                });
+            }
+            allAttendance.push({
+                student: savedStudent._id,
+                teacher: subjectTeacher._id
+            });
+            allComments.push({
+                student: savedStudent._id,
+                teacher: subjectTeacher._id,
+                comment: ""
+            });
+        }
+
+        await Grade.insertMany(allGrades, { session });
+        await Attendance.insertMany(allAttendance, { session });
+        await Comment.insertMany(allComments, { session });
+
+        await session.commitTransaction();
+        session.endSession();
+
+        res.status(200).json({ message: "Student created successfully" });
     } catch (e) {
+        await session.abortTransaction();
+        session.endSession();
         console.error(e);
         res.status(500).json({ error: "Failed to save student info" });
     }
