@@ -11,8 +11,8 @@ import PortalLogin from './PortalLogin.jsx';
 import PortalSignupGate from './PortalSignupGate.jsx';
 import PortalSignup from "./PortalSignup.jsx";
 import Portal from "./Portal.jsx";
-import StudentRecords from "./StudentRecords.jsx";
 import PortalHeader from './PortalHeader.jsx';
+import StudentRecords from "./StudentRecords.jsx";
 import { useLocation } from "react-router-dom";
 
 

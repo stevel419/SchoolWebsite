@@ -1,19 +1,18 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 import { faUserPlus, faClipboardList, faGraduationCap, faFileAlt } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 const portalTiles = [
-  { title: "Admission", icon: faUserPlus, route: "/Admission" },
   { title: "Attendance", icon: faClipboardList, route: "/Attendance" },
-  { title: "Academics", icon: faGraduationCap, route: "/Academics" },
-  { title: "Exam Results", icon: faFileAlt, route: "/ExamResults" }
+  { title: "Grades", icon: faGraduationCap, route: "/Grades" },
+  { title: "Exam Results", icon: faFileAlt, route: "/ExamResults" },
+  { title: "Student Records", icon: faUserPlus, route: "/StudentRecords" }
 ];
 
 const Portal = () => {
   return (
     <section className="min-h-screen pt-24 bg-gray-100 px-6">
-      <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
         {portalTiles.map((tile, idx) => (
           <Link 
             to={tile.route}
