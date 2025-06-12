@@ -78,7 +78,7 @@ function PortalLogin() {
 
       <div className="flex justify-between items-center">
         <Link
-          to="/PortalSignup"
+          to="/PortalSignupGate"
           className="text-sm text-emerald-600 hover:underline"
         >
           Don't have an account? Sign up
