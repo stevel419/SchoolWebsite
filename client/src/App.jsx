@@ -35,6 +35,7 @@ function App() {
             <Route path="/PortalLogin" element={<PortalLogin />} />
             <Route path="/PortalSignupGate" element={<PortalSignupGate />} />
             <Route path="/PortalSignup" element={<PortalSignup />} />
+            <Route path="/Portal" element={<Portal />} />
           </Routes>
         </main>
         <Footer />

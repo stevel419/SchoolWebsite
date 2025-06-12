@@ -40,59 +40,61 @@ function PortalLogin() {
     }
 
     return (
-<section className="min-h-screen pt-24 bg-gray-100 flex items-center justify-center">
-  <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md space-y-6">
-    <h2 className="text-2xl font-semibold text-center text-emerald-700">Teacher Login</h2>
+        <section className="min-h-screen pt-20 px-8 bg-gray-100 flex items-center justify-center">
+            <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md space-y-6">
+                <h2 className="text-2xl font-bold text-center text-emerald-700">Teacher Login</h2>
 
-    <div className="space-y-4">
-      <div>
-        <label className="block text-gray-700 font-medium mb-1">Username</label>
-        <input
-          type="text"
-          required
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
-        />
-      </div>
+                <div className="space-y-4">
+                    <div>
+                        <label className="block text-gray-700 font-medium mb-1">Username</label>
+                        <input
+                        type="text"
+                        required
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        placeholder="Enter username"
+                        />
+                    </div>
 
-      <div>
-        <label className="block text-gray-700 font-medium mb-1">Password</label>
-        <div className="flex items-center border rounded-md overflow-hidden">
-          <input
-            type={showPassword ? "text" : "password"}
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-4 py-2 focus:outline-none"
-          />
-          <button
-            type="button"
-            onClick={togglePassword}
-            className="px-4 text-gray-500 hover:text-emerald-600"
-          >
-            <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
-          </button>
-        </div>
-      </div>
+                    <div>
+                        <label className="block text-gray-700 font-medium mb-1">Password</label>
+                        <div className="flex items-center border rounded-md overflow-hidden">
+                        <input
+                            type={showPassword ? "text" : "password"}
+                            required
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="w-full px-4 py-2 focus:outline-none"
+                            placeholder="Enter password"
+                        />
+                        <button
+                            type="button"
+                            onClick={togglePassword}
+                            className="px-4 text-gray-500 hover:text-emerald-600"
+                        >
+                            <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
+                        </button>
+                        </div>
+                    </div>
 
-      <div className="flex justify-between items-center">
-        <Link
-          to="/PortalSignupGate"
-          className="text-sm text-emerald-600 hover:underline"
-        >
-          Don't have an account? Sign up
-        </Link>
-        <button
-          onClick={handleLogin}
-          className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-md shadow-md transition"
-        >
-          Login
-        </button>
-      </div>
-    </div>
-  </div>
-</section>
+                    <div className="flex justify-between items-center">
+                        <Link
+                        to="/PortalSignupGate"
+                        className="text-sm text-emerald-600 hover:underline"
+                        >
+                        Don't have an account? Sign up
+                        </Link>
+                        <button
+                        onClick={handleLogin}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-md shadow-md transition"
+                        >
+                            Login
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
     );
 }
 

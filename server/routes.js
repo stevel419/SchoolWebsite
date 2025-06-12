@@ -43,7 +43,7 @@ router.post('/login', async (req, res) => {
         const teacher = await Teacher.findOne({ username: username });
 
         if (!teacher) {
-            return res.status(400).json({ error: "Invalid username" });
+            return res.status(400).json({ error: "Username not found" });
         }
         const pwValid = await bcrypt.compare(password, teacher.password);
         if (!pwValid) {
