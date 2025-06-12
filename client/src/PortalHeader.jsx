@@ -1,36 +1,31 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { faTimes, faBars } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import PortalNav from "./PortalNav.jsx";
+import Logo from "../src/components/Logo.jsx";
 
 const PortalHeader = () => {
-  return (
-    <header className="bg-emerald-700 text-white py-4 shadow-md">
-      <div className="container mx-auto px-6 flex justify-between items-center">
-        <div className="flex items-center gap-3">
-          <img
-            src="/KIGURUNYEMBE_LOGO.png"
-            alt="School Logo"
-            className="w-12 h-12 object-contain"
-          />
-          <h1 className="text-lg font-bold">KSS Teacher Portal</h1>
-        </div>
+    const [isOpen, setIsOpen] = useState(false);
+    const toggleMenu = () => {
+        setIsOpen(prev => !prev);
+    };
 
-        <nav className="flex gap-6 text-sm md:text-base">
-          <Link to="/Admission" className="hover:text-gray-200 transition duration-200">
-            Admission
-          </Link>
-          <Link to="/Attendance" className="hover:text-gray-200 transition duration-200">
-            Attendance
-          </Link>
-          <Link to="/Academics" className="hover:text-gray-200 transition duration-200">
-            Academics
-          </Link>
-          <Link to="/ExamResults" className="hover:text-gray-200 transition duration-200">
-            Exam Results
-          </Link>
-        </nav>
-      </div>
-    </header>
-  );
+    return (
+        <header className="w-full fixed top-0 left-0 z-50 flex items-center justify-between px-4 md:px-10 h-20 bg-white text-black shadow-lg">
+            <Logo />
+            <PortalNav isOpen={isOpen} toggleMenu={toggleMenu}/>
+            
+            <div className="absolute right-4 top-5 md:hidden">
+                <button onClick={toggleMenu} className= "">
+                    {isOpen ? (
+                        <FontAwesomeIcon icon={faTimes} size="2x" className="text-emerald-600 font-semibold hover:text-emerald-800 transition-colors duration-300"  />
+                    ) : (
+                        <FontAwesomeIcon icon={faBars} size="2x" className="text-emerald-600 font-semibold hover:text-emerald-800 transition-colors duration-300"/>
+                    )}
+                </button>
+            </div>
+        </header>
+    );
 };
 
 export default PortalHeader;
