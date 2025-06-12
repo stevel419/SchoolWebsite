@@ -59,7 +59,7 @@ function PortalLogin() {
                 <button type="button" onClick={ togglePassword }>
                     <FontAwesomeIcon icon={ showPassword ? faEyeSlash : faEye } />
                 </button>
-                <Link to="/PortalSignup">Sign up</Link>
+                <Link to="/PortalSignupGate">Sign up</Link>
                 <button onClick={ handleLogin }>Login</button>
             </div>
         </section>

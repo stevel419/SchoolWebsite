@@ -8,6 +8,8 @@ import Offer from './components/Offer.jsx';
 import Admission from './components/Admission.jsx';
 import Academics from './components/Academics.jsx';
 import PortalLogin from './PortalLogin.jsx';
+import PortalSignupGate from './PortalSignupGate.jsx';
+import PortalSignup from "./PortalSignup.jsx";
 
 function App() {
   return (
@@ -22,6 +24,8 @@ function App() {
             <Route path="/Admission" element={<Admission />} />
             <Route path="/Academics" element={<Academics />} />
             <Route path="/PortalLogin" element={<PortalLogin />} />
+            <Route path="/PortalSignupGate" element={<PortalSignupGate />} />
+            <Route path="/PortalSignup" element={<PortalSignup />} />
           </Routes>
         </main>
         <Footer />
