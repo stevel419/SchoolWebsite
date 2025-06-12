@@ -1,4 +1,3 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 
 const PortalHeader = () => {
@@ -15,17 +14,17 @@ const PortalHeader = () => {
         </div>
 
         <nav className="flex gap-6 text-sm md:text-base">
-          <Link to="/Admission" className="hover:text-gray-200 transition duration-200">
-            Admission
-          </Link>
           <Link to="/Attendance" className="hover:text-gray-200 transition duration-200">
             Attendance
           </Link>
-          <Link to="/Academics" className="hover:text-gray-200 transition duration-200">
-            Academics
+          <Link to="/Grades" className="hover:text-gray-200 transition duration-200">
+            Grades
           </Link>
           <Link to="/ExamResults" className="hover:text-gray-200 transition duration-200">
             Exam Results
+          </Link>
+          <Link to="/StudentRecords" className="hover:text-gray-200 transition duration-200">
+            Student Records
           </Link>
         </nav>
       </div>

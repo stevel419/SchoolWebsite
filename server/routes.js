@@ -111,8 +111,6 @@ router.get('/get-students', authenticateJWT, async (req, res) => {
       res.status(500).json({ error: "Failed to fetch students" });
     }
   });
-  
-
 
   router.get('/search-students', authenticateJWT, async (req, res) => {
     try {
