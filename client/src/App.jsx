@@ -12,11 +12,19 @@ import PortalSignupGate from './PortalSignupGate.jsx';
 import PortalSignup from "./PortalSignup.jsx";
 import Portal from "./Portal.jsx";
 import StudentRecords from "./StudentRecords.jsx";
+import PortalHeader from './PortalHeader.jsx';
+import { useLocation } from "react-router-dom";
+
 
 function App() {
+  const location = useLocation();
+
+  const isPortalRoute = location.pathname.startsWith("/Portal") || 
+  ["/Admission", "/Academics", "/Attendance", "/ExamResults"].includes(location.pathname);
+
   return (
       <div>
-        <Header />
+        {isPortalRoute ? <PortalHeader /> : <Header />}
         <main>
           <Routes>
             <Route path="/" element={<Home />} />
