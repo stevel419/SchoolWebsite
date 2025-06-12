@@ -8,7 +8,7 @@ const Nav = ({isOpen, toggleMenu}) => {
         {id: 2, text: 'About', slug: '/About'},
         {id: 3, text: 'Offer', slug: '/Offer'},
         {id: 4, text: 'Achievements', slug: '/Accomplishments'},
-        {id: 5, text: 'KPortal', slug: '../PortalLogin'}
+        {id: 5, text: 'KPortal', slug: '/PortalLogin'}
     ];
     
     return (

@@ -1,7 +1,7 @@
 function PortalSignup() {
     return (
         <section>
-            
+            <></>
         </section>
     );
 }
