@@ -56,7 +56,7 @@ const studentSchema = new mongoose.Schema({
     },
     gender: {
         type: String,
-        enum: ['male', 'female'],
+        enum: ['Male', 'Female'],
         required: true
     },
     religion: {
@@ -106,6 +106,10 @@ const gradeSchema = new mongoose.Schema({
         required: true,
         min: 0,
         max: 100
+    },
+    subject: {
+        type: String,
+        required: true
     }
 }, {
     timestamps: true
@@ -131,6 +135,10 @@ const attendanceSchema = new mongoose.Schema({
         type: Date,
         required: true,
         default: Date.now
+    },
+    subject: {
+        type: String,
+        required: true
     }
 });
 
@@ -148,6 +156,10 @@ const commentSchema = new mongoose.Schema({
     comment: {
         type: String,
         required: false
+    },
+    subject: {
+        type: String,
+        required: true
     }
 });
 

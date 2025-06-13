@@ -64,74 +64,102 @@ router.post('/login', async (req, res) => {
 
 router.get('/get-students', authenticateJWT, async (req, res) => {
     try {
-      const isAdmin = req.user.isAdmin;
-      const teacherId = req.user.teacherId;
-  
-      let students;
-  
-      if (isAdmin) {
-        students = await Student.find();
-      } 
-      
-      else {
-        const teacher = await Teacher.findById(teacherId);
-        if (!teacher) {
-          return res.status(404).json({ error: "Teacher not found" });
-        }
-        const subject = teacher.subject;
-  
-        students = await Student.find({
-          subjects: { $in: [subject] }
-        });
-      }
-  
-      const fullStudents = await Promise.all(
-        students.map(async (student) => {
-          const filters = { student: student._id };
-          if (!isAdmin) filters.teacher = teacherId;
-  
-          const [grades, attendance, comments] = await Promise.all([
-            Grade.find(filters),
-            Attendance.find(filters),
-            Comment.find(filters)
-          ]);
-  
-          return {
-            ...student.toObject(),
-            grades,
-            attendance,
-            comments
-          };
-        })
-      );
-  
-      res.status(200).json(fullStudents);
-    } catch (e) {
-      console.error(e);
-      res.status(500).json({ error: "Failed to fetch students" });
-    }
-  });
+        const isAdmin = req.user.isAdmin;
+        const teacherId = req.user.teacherId;
 
-  router.get('/search-students', authenticateJWT, async (req, res) => {
+        let students;
+
+        if (isAdmin) {
+            students = await Student.find();
+        } 
+        
+        else {
+            const teacher = await Teacher.findById(teacherId);
+            if (!teacher) {
+                return res.status(404).json({ error: "Teacher not found" });
+            }
+            const subject = teacher.subject;
+
+            students = await Student.find({
+                subjects: { $in: [subject] }
+            });
+        }
+
+        const fullStudents = await Promise.all(
+            students.map(async (student) => {
+                const filters = { student: student._id };
+                if (!isAdmin) filters.teacher = teacherId;
+
+                const [grades, attendance, comments] = await Promise.all([
+                    Grade.find(filters),
+                    Attendance.find(filters),
+                    Comment.find(filters)
+                ]);
+
+                return {
+                    ...student.toObject(),
+                    grades,
+                    attendance,
+                    comments
+                };
+            })
+        );
+
+        res.status(200).json(fullStudents);
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: "Failed to fetch students" });
+    }
+});
+
+router.get('/search-students', authenticateJWT, async (req, res) => {
     try {
         const isAdmin = req.user.isAdmin;
         const teacherId = req.user.teacherId;
-        const searchTerm = req.query.name;
+        const searchTerm = req.query.name?.trim();
 
         if (!searchTerm) {
             return res.status(400).json({ error: "Missing search term" });
         }
 
-        // Case-insensitive regex search on first or last name
-        const nameFilter = {
-            $or: [
-                { firstName: { $regex: searchTerm, $options: 'i' } },
-                { lastName: { $regex: searchTerm, $options: 'i' } }
-            ]
-        };
+        // Case-insensitive regex search on first or last name, and first and last name
+        let nameFilter;
+        const nameParts = searchTerm.split(' ').filter(Boolean);
+        if (nameParts.length === 1) {
+            const part = nameParts[0];
+            nameFilter = {
+                $or: [
+                    { firstName: { $regex: part, $options: 'i' } },
+                    { lastName: { $regex: part, $options: 'i' } }
+                ]
+            };
+        } else if (nameParts.length >= 2) {
+            const first = nameParts[0];
+            const last = nameParts.slice(1).join(' ');
+            nameFilter = {
+                $or: [
+                    { 
+                        $and: [
+                            { firstName: { $regex: first, $options: 'i' } },
+                            { lastName: { $regex: last, $options: 'i' } }
+                        ]
+                    },
+                    { 
+                        $and: [
+                            { firstName: { $regex: last, $options: 'i' } },
+                            { lastName: { $regex: first, $options: 'i' } }
+                        ]
+                    }
+                ]
+            };
+        }
 
         if (isAdmin) {
             const students = await Student.find(nameFilter);
+
+            if (students.length === 0) {
+                return res.status(400).json({ error: "No matching students found" });
+            }
 
             const enriched = await Promise.all(students.map(async (student) => {
                 const [grades, attendance, comments] = await Promise.all([
@@ -147,7 +175,7 @@ router.get('/get-students', authenticateJWT, async (req, res) => {
         } else {
             const teacher = await Teacher.findById(teacherId);
             if (!teacher) {
-                return res.status(404).json({ error: "Teacher not found" });
+                return res.status(400).json({ error: "Teacher not found" });
             }
 
             const subject = teacher.subject;
@@ -156,6 +184,10 @@ router.get('/get-students', authenticateJWT, async (req, res) => {
                 ...nameFilter,
                 subjects: { $in: [subject] }
             });
+
+            if (students.length === 0) {
+                return res.status(400).json({ error: "No matching students found" });
+            }
 
             const enriched = await Promise.all(students.map(async (student) => {
                 const [grades, attendance, comments] = await Promise.all([
@@ -225,17 +257,20 @@ router.post('/save-student', authenticateJWT, async (req, res) => {
                     student: savedStudent._id,
                     teacher: subjectTeacher._id,
                     assessment,
-                    score: 0
+                    score: 0,
+                    subject
                 });
             }
             allAttendance.push({
                 student: savedStudent._id,
-                teacher: subjectTeacher._id
+                teacher: subjectTeacher._id,
+                subject
             });
             allComments.push({
                 student: savedStudent._id,
                 teacher: subjectTeacher._id,
-                comment: ""
+                comment: "",
+                subject
             });
         }
 
@@ -246,7 +281,7 @@ router.post('/save-student', authenticateJWT, async (req, res) => {
         await session.commitTransaction();
         session.endSession();
 
-        res.status(200).json({ message: "Student created successfully" });
+        res.status(200).json({ message: "Student created successfully!" });
     } catch (e) {
         await session.abortTransaction();
         session.endSession();

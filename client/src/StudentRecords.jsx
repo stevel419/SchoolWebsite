@@ -1,7 +1,5 @@
 import { useState } from "react";
 
-const token = sessionStorage.getItem('token');
-
 const StudentForm = () => {
     const [admissionNum, setAdmissionNum] = useState('');
     const [firstName, setFirstName] = useState('');
@@ -54,6 +52,7 @@ const StudentForm = () => {
                 form: Number(form), 
                 subjects: subjects.filter(subject => subject.trim() !== '')
             };
+            const token = sessionStorage.getItem('token');
 
             const res = await fetch('http://localhost:5000/save-student', {
                 method: 'POST',
@@ -180,8 +179,8 @@ const StudentForm = () => {
                                 className="w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                             >
                                 <option value="" disabled>-- Select one --</option>
-                                <option value="male">Male</option>
-                                <option value="female">Female</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
                             </select>
                         </div>
                     </div>
@@ -321,10 +320,45 @@ const StudentForm = () => {
 function StudentRecords() {
     const [name, setName] = useState('');
     const [openForm, setOpenForm] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [studentData, setStudentData] = useState([]);
+    const [expandedStudentIds, setExpandedStudentIds] = useState([]);
+
+    const toggleStudentDetails = (id) => {
+        setExpandedStudentIds(prev =>
+            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+        );
+    };
 
     const handleSearchStudent = async (e) => {
         e.preventDefault();
+        setLoading(true);
+        setError('');
 
+        try {
+            const token = sessionStorage.getItem('token');
+
+            const res = await fetch(`http://localhost:5000/search-students?name=${encodeURIComponent(name)}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                }
+            });
+
+            const data = await res.json();
+            if (res.ok) {
+                setStudentData(data);
+                setName('');
+            } else {
+                setError(data.error || 'Cannot find matching students');
+            }
+        } catch (e) {
+            setError('Failed to search student. Please try again.');
+        } finally {
+            setLoading(false);
+        }
     }
 
     return (
@@ -346,13 +380,84 @@ function StudentRecords() {
                             className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition duration-200"
                         />
                     </div>
+                    {error && (
+                        <div className="bg-red-50 border border-red-200 rounded-md p-3">
+                            <p className="text-red-600 text-sm">{error}</p>
+                        </div>
+                    )}
                     <button 
                         type="submit"
+                        disabled={loading}
                         className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 whitespace-nowrap"
                     >
-                        Search Student
+                        {loading ? 'Searching Student...' : 'Search Student'}
                     </button>
                 </form>
+                {/* Student Info */}
+                {studentData.length > 0 && (
+                    <div className="mt-6 space-y-4">
+                        {studentData.map(student => {
+                            const isOpen = expandedStudentIds.includes(student._id);
+                            return (
+                                <div key={student._id} className="border rounded-lg shadow-sm p-4">
+                                    <div className="flex justify-between items-center">
+                                        <div>
+                                            <p className="font-semibold text-lg">{student.firstName} {student.lastName}</p>
+                                            <p className="text-sm text-gray-600">Form: {student.form}</p>
+                                            <p className="text-sm text-gray-600">Date of Birth: {new Date(student.dateOfBirth).toLocaleDateString()}</p>
+                                            <p className="text-sm text-gray-600">Sex: {student.gender}</p>
+                                        </div>
+                                        <button
+                                            onClick={() => toggleStudentDetails(student._id)}
+                                            className="text-emerald-600 hover:underline font-medium"
+                                        >
+                                            {isOpen ? 'Hide Details' : 'View Details'}
+                                        </button>
+                                    </div>
+
+                                    {isOpen && (
+                                    <div className="mt-4 border-t pt-4 space-y-2 text-sm text-gray-700">
+                                        <strong>Guardian Information:</strong>
+                                        <ul className="ml-4 list-disc">
+                                            <li>Name: {student.guardian.name}</li>
+                                            <li>Phone: {student.guardian.phone}</li>
+                                            <li>Occupation: {student.guardian.occupation}</li>
+                                        </ul>
+                                        <p><strong>Address:</strong> {student.address}</p>
+
+                                        <strong>Academic Records:</strong>
+                                        {student.subjects && student.subjects.length > 0 ? (
+                                            <ul className="ml-4 list-disc space-y-2">
+                                                {student.subjects.map((s, idx) => {
+                                                // Filter data
+                                                const gradesForSubject = student.grades.filter(g => g.subject === s);
+                                                const attendanceForSubject = student.attendance.find(a => a.subject === s);
+                                                const commentForSubject = student.comments.find(c => c.subject === s);
+
+                                                return (
+                                                    <li key={idx}>
+                                                        <p className="font-medium">{s}</p> →{' '}
+                                                        <span>
+                                                            Grades: {gradesForSubject.length > 0 ? (
+                                                                gradesForSubject.map((g, i) => (
+                                                                    <span key={i}>{g.assessment}: {g.score}{i < gradesForSubject.length - 1 ? ', ' : ''}</span>
+                                                                ))
+                                                            ) : 'N/A'} <span className="font-bold">|</span>{' '}
+                                                            Attendance: {attendanceForSubject.attended ? '✅' : '❌'} <span className="font-bold">|</span>{' '}
+                                                            Comment: {commentForSubject ? commentForSubject.comment || 'None' : 'N/A'}
+                                                        </span>
+                                                    </li>
+                                                );
+                                                })}
+                                            </ul>
+                                        ) : <p className="ml-4 text-gray-500">No subjects available</p>}
+                                    </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
             </div>
             <div className="bg-white rounded-lg shadow-lg p-6">
                 <div className="flex items-center justify-between mb-4">
@@ -361,7 +466,7 @@ function StudentRecords() {
                         onClick={() => setOpenForm((prev) => !prev)}
                         className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
                     >
-                        <span>{openForm ? 'Hide Form' : 'Add New Student'}</span>
+                        <span>{openForm ? 'Hide Form' : 'Add Student'}</span>
                         <span className={`text-lg font-bold transition-transform duration-200 ${openForm ? 'rotate-45' : ''}`}>
                             +
                         </span>
