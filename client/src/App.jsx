@@ -14,6 +14,7 @@ import Portal from "./Portal.jsx";
 import PortalHeader from './PortalHeader.jsx';
 import StudentRecords from "./StudentRecords.jsx";
 import Grades from "./Grades.jsx";
+import PortalAttendance from "./PortalAttendance.jsx";
 
 function App() {
   const location = useLocation();
@@ -38,6 +39,7 @@ function App() {
             <Route path="/Portal" element={<Portal />} />
             <Route path="/StudentRecords" element={<StudentRecords />} />
             <Route path="/Grades" element={<Grades />} />
+            <Route path="/PortalAttendance" element={<PortalAttendance />} />
           </Routes>
         </main>
         <Footer />

@@ -3,7 +3,7 @@ import { faUserPlus, faClipboardList, faGraduationCap, faFileAlt } from '@fortaw
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 const portalTiles = [
-  { title: "Attendance", icon: faClipboardList, route: "/Attendance" },
+  { title: "Attendance", icon: faClipboardList, route: "/PortalAttendance" },
   { title: "Grades", icon: faGraduationCap, route: "/Grades" },
   { title: "Exam Results", icon: faFileAlt, route: "/ExamResults" },
   { title: "Student Records", icon: faUserPlus, route: "/StudentRecords" }
