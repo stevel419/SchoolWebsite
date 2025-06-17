@@ -368,7 +368,7 @@ function StudentRecords() {
                 <p className="text-gray-600">Search for existing students or add new ones to the system</p>
             </div>
             <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-                <h2 className="text-xl font-semibold text-gray-800 mb-4">Search Student</h2>
+                <h2 className="text-2xl font-semibold text-gray-800 mb-4">Search Student</h2>
                 <form onSubmit={handleSearchStudent} className="flex flex-col sm:flex-row gap-4">
                     <div className="flex-1">
                         <input
@@ -461,7 +461,7 @@ function StudentRecords() {
             </div>
             <div className="bg-white rounded-lg shadow-lg p-6">
                 <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl font-semibold text-gray-800">Add New Student</h2>
+                    <h2 className="text-2xl font-semibold text-gray-800">Add New Student</h2>
                     <button 
                         onClick={() => setOpenForm((prev) => !prev)}
                         className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"

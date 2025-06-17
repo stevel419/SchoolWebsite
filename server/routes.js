@@ -294,7 +294,7 @@ router.post('/update-grade', authenticateJWT, async (req, res) => {
     try {
         const isAdmin = req.user.isAdmin;
         const teacherId = req.user.teacherId;
-        const { admissionNum, assessment, score, teacher_id } = req.body;
+        const { admissionNum, assessment, score, subject } = req.body;
         const student = await Student.findOne({ admissionNum: admissionNum });
         if (!student) {
             return res.status(400).json({ error: "Student is not in database" });
@@ -302,7 +302,7 @@ router.post('/update-grade', authenticateJWT, async (req, res) => {
         
         let grade;
         if (isAdmin) {
-            grade = await Grade.findOne({ student: student._id, teacher: teacher_id, assessment: assessment });
+            grade = await Grade.findOne({ student: student._id, subject: subject, assessment: assessment });
         } else {
             grade = await Grade.findOne({ student: student._id, teacher: teacherId, assessment: assessment });
         }
@@ -356,7 +356,7 @@ router.post('/update-comment', authenticateJWT, async (req, res) => {
     try {
         const isAdmin = req.user.isAdmin;
         const teacherId = req.user.teacherId;
-        const { admissionNum, newComment, teacher_id } = req.body;
+        const { admissionNum, newComment, subject } = req.body;
         const student = await Student.findOne({ admissionNum: admissionNum });
         if (!student) {
             return res.status(400).json({ error: "Student is not in database" });
@@ -364,7 +364,7 @@ router.post('/update-comment', authenticateJWT, async (req, res) => {
         
         let comment;
         if (isAdmin) {
-            comment = await Comment.findOne({ student: student._id, teacher: teacher_id });
+            comment = await Comment.findOne({ student: student._id, subject: subject });
         } else {
             comment = await Comment.findOne({ student: student._id, teacher: teacherId });
         }

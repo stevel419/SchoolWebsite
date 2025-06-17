@@ -1,10 +1,19 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 function Grades() {
     const [name, setName] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [studentData, setStudentData] = useState([]);
+    const [editedScores, setEditedScores] = useState({});
+    const [editedComments, setEditedComments] = useState({});
+    const [updateStatus, setUpdateStatus] = useState({});
+    const [updateCommentStatus, setUpdateCommentStatus] = useState({});
+    const [roster, setRoster] = useState([]);
+    const [rosterError, setRosterError] = useState('');
+    const [expandedStudents, setExpandedStudents] = useState(new Set());
+    const [filterForm, setFilterForm] = useState('');
+    const [sortBy, setSortBy] = useState('name');
 
     const handleSearchStudent = async (e) => {
         e.preventDefault();
@@ -36,14 +45,314 @@ function Grades() {
         }
     }
 
+    const handleGetRoster = async () => {
+        setRosterError('');
+
+        try {
+            const token = sessionStorage.getItem('token');
+
+            const res = await fetch('http://localhost:5000/get-students', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                }
+            });
+
+            const data = await res.json();
+            if (res.ok) {
+                setRoster(data);
+            } else {
+                setRosterError(data.error || 'Cannot retrieve roster');
+            }
+        } catch (e) {
+            setRosterError('Failed to retrieve roster. Reload the page to try again.');
+        }
+    }
+
+    const toggleStudentExpansion = (studentId) => {
+        setExpandedStudents(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(studentId)) {
+                newSet.delete(studentId);
+            } else {
+                newSet.add(studentId);
+            }
+            return newSet;
+        });
+    };
+
+    const getFilteredAndSortedRoster = () => {
+        let filtered = roster;
+        
+        if (filterForm) {
+            filtered = filtered.filter(student => student.form === Number(filterForm));
+        }
+        
+        return filtered.sort((a, b) => {
+            switch (sortBy) {
+                case 'name':
+                    return `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`);
+                case 'form':
+                    return a.form - b.form;
+                case 'dateOfBirth':
+                    return new Date(a.dateOfBirth) - new Date(b.dateOfBirth);
+                default:
+                    return 0;
+            }
+        });
+    };
+
+    const renderStudentGradesAndComment = (student) => {
+        return (
+            <div className="mt-4 border-t pt-4 space-y-6">
+                {student.subjects && student.subjects.length > 0 ? (
+                    student.subjects.map((s, idx) => {
+                        const gradesForSubject = student.grades.filter(g => g.subject === s);
+                        gradesForSubject.sort((a, b) => {
+                            const order = { 'Midterm': 1, 'Final': 2 };
+                            return (order[a.assessment] || 999) - (order[b.assessment] || 999);
+                        });
+                        const commentForSubject = student.comments.find(c => c.subject === s);
+                        const commentKey = `${student.admissionNum}-${s}`;
+                        const existingComment = commentForSubject?.comment || '';
+                        
+                        if (gradesForSubject.length === 0) return null;
+                        return (
+                            <div key={idx} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                <div className="mb-4">
+                                    <h4 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+                                        <span className="w-3 h-3 bg-emerald-500 rounded-full mr-2"></span>
+                                        {s}
+                                    </h4>
+                                    {/* Grades Section */}
+                                    <div className="mb-4">
+                                        <h5 className="text-sm font-medium text-gray-700 mb-2">Assessment Scores</h5>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            {gradesForSubject.length > 0 ? (
+                                                gradesForSubject.map((g, i) => (
+                                                    <div key={i} className="bg-white rounded-md p-2 border border-gray-200 shadow-sm">
+                                                        <div className="flex items-center justify-between">
+                                                            <label className="text-sm font-medium text-gray-700">{g.assessment}:</label>
+                                                            <div className="flex items-center gap-2">
+                                                                <input
+                                                                    type="number"
+                                                                    defaultValue={g.score}
+                                                                    min="0"
+                                                                    max="100"
+                                                                    className="border border-gray-300 px-1 py-1 rounded-md w-20 text-center focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition duration-200"
+                                                                    onChange={(e) => {
+                                                                        const value = e.target.value;
+                                                                        setEditedScores(prev => ({
+                                                                            ...prev,
+                                                                            [student.admissionNum + "-" + s + "-" + g.assessment]: value
+                                                                        }));
+                                                                    }}
+                                                                    onBlur={async (e) => {
+                                                                        const updatedScore = e.target.value;
+                                                                        const key = student.admissionNum + "-" + s + "-" + g.assessment;
+
+                                                                        if (updatedScore !== String(g.score)) {
+                                                                            setUpdateStatus(prev => ({ ...prev, [key]: 'loading' }));
+
+                                                                            try {
+                                                                                const token = sessionStorage.getItem('token');
+                                                                                const res = await fetch('http://localhost:5000/update-grade', {
+                                                                                    method: 'POST',
+                                                                                    headers: {
+                                                                                        'Content-Type': 'application/json',
+                                                                                        'Authorization': 'Bearer ' + token
+                                                                                    },
+                                                                                    body: JSON.stringify({
+                                                                                        admissionNum: student.admissionNum,
+                                                                                        assessment: g.assessment,
+                                                                                        score: updatedScore,
+                                                                                        subject: s,
+                                                                                    })
+                                                                                });
+
+                                                                                const data = await res.json();
+
+                                                                                if (!res.ok) {
+                                                                                    throw new Error(data.error || 'Failed to update');
+                                                                                }
+                                                                                setUpdateStatus(prev => ({ ...prev, [key]: 'success' }));
+                                                                                
+                                                                                // Clear success message after 3 seconds
+                                                                                setTimeout(() => {
+                                                                                    setUpdateStatus(prev => {
+                                                                                        const updated = { ...prev };
+                                                                                        delete updated[key];
+                                                                                        return updated;
+                                                                                    });
+                                                                                }, 3000);
+                                                                            } catch (e) {
+                                                                                setUpdateStatus(prev => ({ ...prev, [key]: 'error' }));
+                                                                            }
+                                                                        }
+                                                                    }}
+                                                                />
+                                                                <span className="text-gray-500">/100</span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="mt-1 min-h-[20px]">
+                                                            {updateStatus[`${student.admissionNum}-${s}-${g.assessment}`] === 'loading' && (
+                                                                <div className="flex items-center gap-1">
+                                                                    <div className="w-3 h-3 border border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                                                                    <span className="text-xs text-blue-600">Saving...</span>
+                                                                </div>
+                                                            )}
+                                                            {updateStatus[`${student.admissionNum}-${s}-${g.assessment}`] === 'success' && (
+                                                                <div className="flex items-center gap-1">
+                                                                    <svg className="w-3 h-3 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                                    </svg>
+                                                                    <span className="text-xs text-green-600">Saved</span>
+                                                                </div>
+                                                            )}
+                                                            {updateStatus[`${student.admissionNum}-${s}-${g.assessment}`] === 'error' && (
+                                                                <div className="flex items-center gap-1">
+                                                                    <svg className="w-3 h-3 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                                                                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                                                    </svg>
+                                                                    <span className="text-xs text-red-500">Error saving</span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <div className="bg-white rounded-md p-3 border border-gray-200">
+                                                    <span className="text-gray-500 text-sm">No grades available</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                                {/* Comments Section */}
+                                <div className="border-t border-gray-200 pt-4">
+                                    <h5 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
+                                        <svg className="w-4 h-4 mr-1 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                        </svg>
+                                        Teacher Comment
+                                    </h5>
+                                    <div className="bg-white rounded-md border border-gray-200 shadow-sm">
+                                        <textarea
+                                            rows="2"
+                                            placeholder={existingComment || "Add a comment for this student..."}
+                                            defaultValue={existingComment}
+                                            className="w-full px-3 py-2 border-0 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition duration-200 placeholder-gray-400"
+                                            onChange={(e) => {
+                                                setEditedComments(prev => ({
+                                                    ...prev,
+                                                    [commentKey]: e.target.value
+                                                }));
+                                            }}
+                                            onBlur={async (e) => {
+                                                const updatedComment = e.target.value.trim();
+                                                
+                                                if (updatedComment !== existingComment) {
+                                                    setUpdateCommentStatus(prev => ({ ...prev, [commentKey]: 'loading' }));
+
+                                                    try {
+                                                        const token = sessionStorage.getItem('token');
+                                                        const res = await fetch('http://localhost:5000/update-comment', {
+                                                            method: 'POST',
+                                                            headers: {
+                                                                'Content-Type': 'application/json',
+                                                                'Authorization': 'Bearer ' + token
+                                                            },
+                                                            body: JSON.stringify({
+                                                                admissionNum: student.admissionNum,
+                                                                newComment: updatedComment,
+                                                                subject: s
+                                                            })
+                                                        });
+
+                                                        const data = await res.json();
+
+                                                        if (!res.ok) {
+                                                            throw new Error(data.error || 'Failed to update');
+                                                        }
+                                                        setUpdateCommentStatus(prev => ({ ...prev, [commentKey]: 'success' }));
+                                                        
+                                                        // Clear success message after 3 seconds
+                                                        setTimeout(() => {
+                                                            setUpdateCommentStatus(prev => {
+                                                                const updated = { ...prev };
+                                                                delete updated[commentKey];
+                                                                return updated;
+                                                            });
+                                                        }, 3000);
+                                                    } catch (e) {
+                                                        setUpdateCommentStatus(prev => ({ ...prev, [commentKey]: 'error' }));
+                                                    }
+                                                }
+                                            }}
+                                        />
+                                        <div className="px-3 pb-2 min-h-[24px] flex items-center justify-between">
+                                            <div className="flex items-center">
+                                                {updateCommentStatus[commentKey] === 'loading' && (
+                                                    <div className="flex items-center gap-1">
+                                                        <div className="w-3 h-3 border border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                                                        <span className="text-xs text-blue-600">Saving comment...</span>
+                                                    </div>
+                                                )}
+                                                {updateCommentStatus[commentKey] === 'success' && (
+                                                    <div className="flex items-center gap-1">
+                                                        <svg className="w-3 h-3 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                        </svg>
+                                                        <span className="text-xs text-green-600">Comment saved</span>
+                                                    </div>
+                                                )}
+                                                {updateCommentStatus[commentKey] === 'error' && (
+                                                    <div className="flex items-center gap-1">
+                                                        <svg className="w-3 h-3 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                                        </svg>
+                                                        <span className="text-xs text-red-500">Error saving comment</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <span className="text-xs text-gray-400">
+                                                {(editedComments[commentKey] || existingComment || '').length}/500
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })
+                ) : (
+                    <div className="bg-gray-50 rounded-lg p-6 text-center border border-gray-200">
+                        <svg className="w-8 h-8 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                        </svg>
+                        <p className="text-gray-500">No subjects available for this student</p>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    const uniqueForms = [...new Set(roster.map(student => student.form))].sort();
+    const filteredRoster = getFilteredAndSortedRoster();
+
+    useEffect(() => {
+        handleGetRoster();
+    }, []);
+
     return (
         <section className="pt-40 pb-20 px-4 max-w-6xl mx-auto">
             <div className="mb-8">
                 <h1 className="text-3xl font-bold text-gray-800 mb-2">Grades</h1>
                 <p className="text-gray-600">Search for existing students or check roster to enter grades</p>
             </div>
+            {/* Search */}
             <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-                <h2 className="text-xl font-semibold text-gray-800 mb-4">Search Student</h2>
+                <h2 className="text-2xl font-semibold text-gray-800 mb-4">Search Student</h2>
                 <form onSubmit={handleSearchStudent} className="flex flex-col sm:flex-row gap-4">
                     <div className="flex-1">
                         <input
@@ -68,6 +377,102 @@ function Grades() {
                         {loading ? 'Searching Student...' : 'Search Student'}
                     </button>
                 </form>
+                {studentData.length > 0 && (
+                    <div className="mt-6 space-y-4">
+                        {studentData.map((student, studentIdx) => (
+                            <div key={studentIdx} className="border rounded-lg shadow-sm p-4">
+                                <div className="flex flex-col md:flex-row md:justify-between md:items-center md:gap-4">
+                                    <p className="font-semibold text-lg">{student.firstName} {student.lastName}</p>
+                                    <div className="flex flex-col md:flex-row md:gap-8">
+                                        <p className="text-sm text-gray-600">Form: {student.form}</p>
+                                        <p className="text-sm text-gray-600">Date of Birth: {new Date(student.dateOfBirth).toLocaleDateString()}</p>
+                                        <p className="text-sm text-gray-600">Sex: {student.gender}</p>
+                                    </div>
+                                </div>
+                                {renderStudentGradesAndComment(student)}
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+            {/* Roster */}
+            <div className="bg-white rounded-lg shadow-lg p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                    <h2 className="text-2xl font-semibold text-gray-800">Roster ({filteredRoster.length} students)</h2>
+                    {/* Filter and Sort Controls */}
+                    <div className="flex flex-col sm:flex-row gap-3">
+                        <select
+                            value={filterForm}
+                            onChange={(e) => setFilterForm(e.target.value)}
+                            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                        >
+                            <option value="">All Forms</option>
+                            {uniqueForms.map(form => (
+                                <option key={form} value={form}>Form {form}</option>
+                            ))}
+                        </select>
+                        
+                        <select
+                            value={sortBy}
+                            onChange={(e) => setSortBy(e.target.value)}
+                            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                        >
+                            <option value="name">Sort by Name</option>
+                            <option value="form">Sort by Form</option>
+                            <option value="dateOfBirth">Sort by Age</option>
+                        </select>
+                    </div>
+                </div>
+
+                {filteredRoster.length > 0 && (
+                    <div className="space-y-3">
+                        {filteredRoster.map((student, studentIdx) => (
+                            <div key={studentIdx} className="border rounded-lg shadow-sm">
+                                {/* Student Basic Info */}
+                                <div 
+                                    className="p-4 cursor-pointer hover:bg-gray-50 hover:rounded-lg"
+                                    onClick={() => toggleStudentExpansion(student.admissionNum)}
+                                >
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex flex-col sm:flex-row sm:items-center sm:gap-6">
+                                            <p className="font-semibold text-lg">{student.firstName} {student.lastName}</p>
+                                            <div className="flex flex-col sm:flex-row sm:gap-6 text-sm text-gray-600">
+                                                <span>Form: {student.form}</span>
+                                                <span>Sex: {student.gender}</span>
+                                                <span>DOB: {new Date(student.dateOfBirth).toLocaleDateString()}</span>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-sm text-gray-500">
+                                                {expandedStudents.has(student.admissionNum) ? 'Hide' : 'Show'} Grades
+                                            </span>
+                                            <svg 
+                                                className={`w-5 h-5 transition-transform ${expandedStudents.has(student.admissionNum) ? 'rotate-180' : ''}`}
+                                                fill="none" 
+                                                stroke="currentColor" 
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </div>
+                                {/* Student Grades And Comment */}
+                                {expandedStudents.has(student.admissionNum) && (
+                                    <div className="px-4 pb-4">
+                                        {renderStudentGradesAndComment(student)}
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {rosterError && (
+                    <div className="bg-red-50 border border-red-200 rounded-md p-3">
+                        <p className="text-red-600 text-sm">{rosterError}</p>
+                    </div>
+                )}
             </div>
         </section>
     );
