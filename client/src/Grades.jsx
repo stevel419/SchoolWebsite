@@ -118,12 +118,39 @@ function Grades() {
                         const existingComment = commentForSubject?.comment || '';
                         
                         if (gradesForSubject.length === 0) return null;
+
+                        const sum = gradesForSubject.reduce((accumulator, grade) => accumulator + grade.score, 0);
+                        const avg = sum / gradesForSubject.length;
+                        let overall;
+                        if (student.form >= 5) {
+                            if (avg >= 80) overall = 'A';
+                            else if (avg >= 70) overall = 'B';
+                            else if (avg >= 60) overall = 'C';
+                            else if (avg >= 50) overall = 'D';
+                            else if (avg >= 40) overall = 'E';
+                            else if (avg >= 35) overall = 'S';
+                            else if (avg >= 0) overall = 'F';
+                            else overall = 'N/A';
+                        } else {
+                            if (avg >= 75) overall = 'A';
+                            else if (avg >= 65) overall = 'B';
+                            else if (avg >= 45) overall = 'C';
+                            else if (avg >= 30) overall = 'D';
+                            else if (avg >= 0) overall = 'F';
+                            else overall = 'N/A';
+                        }
+
                         return (
                             <div key={idx} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                                 <div className="mb-4">
-                                    <h4 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
-                                        <span className="w-3 h-3 bg-emerald-500 rounded-full mr-2"></span>
-                                        {s}
+                                    <h4 className="text-lg font-semibold text-gray-800 mb-3 flex items-center justify-between">
+                                        <span className="flex items-center">
+                                            <span className="w-3 h-3 bg-emerald-500 rounded-full mr-2"></span>
+                                            {s}
+                                        </span>
+                                        <span className="text-base px-2 py-1 rounded">
+                                            Overall: {avg.toFixed(1)}% ({overall})
+                                        </span>
                                     </h4>
                                     {/* Grades Section */}
                                     <div className="mb-4">
@@ -177,6 +204,25 @@ function Grades() {
                                                                                     throw new Error(data.error || 'Failed to update');
                                                                                 }
                                                                                 setUpdateStatus(prev => ({ ...prev, [key]: 'success' }));
+
+                                                                                const updateStudentGrades = (studentList) => {
+                                                                                    return studentList.map(studentItem => {
+                                                                                        if (studentItem.admissionNum === student.admissionNum) {
+                                                                                            return {
+                                                                                                ...studentItem,
+                                                                                                grades: studentItem.grades.map(grade => {
+                                                                                                    if (grade.subject === s && grade.assessment === g.assessment) {
+                                                                                                        return { ...grade, score: parseFloat(updatedScore) };
+                                                                                                    }
+                                                                                                    return grade;
+                                                                                                })
+                                                                                            };
+                                                                                        }
+                                                                                        return studentItem;
+                                                                                    });
+                                                                                };
+                                                                                setStudentData(updateStudentGrades);
+                                                                                setRoster(updateStudentGrades);
                                                                                 
                                                                                 // Clear success message after 3 seconds
                                                                                 setTimeout(() => {
@@ -240,7 +286,7 @@ function Grades() {
                                     <div className="bg-white rounded-md border border-gray-200 shadow-sm">
                                         <textarea
                                             rows="2"
-                                            placeholder={existingComment || "Add a comment for this student..."}
+                                            placeholder={"Add a comment for this student..."}
                                             defaultValue={existingComment}
                                             className="w-full px-3 py-2 border-0 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition duration-200 placeholder-gray-400"
                                             onChange={(e) => {
