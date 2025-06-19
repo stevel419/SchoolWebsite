@@ -27,7 +27,7 @@ function PortalSignup() {
         setSuccess('');
 
         try {
-            const res = await fetch('http://localhost:3000/create-user', {
+            const res = await fetch('http://localhost:5000/create-user', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({firstName, lastName, subject, username, password, isAdmin})

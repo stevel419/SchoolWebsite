@@ -15,12 +15,13 @@ import PortalHeader from './PortalHeader.jsx';
 import StudentRecords from "./StudentRecords.jsx";
 import Grades from "./Grades.jsx";
 import PortalAttendance from "./PortalAttendance.jsx";
+import PortalExamResults from "./PortalExamResults.jsx";
 
 function App() {
   const location = useLocation();
 
   const isPortalRoute = location.pathname.startsWith("/Portal") || 
-  ["/StudentRecords", "/Grades", "/Attendance", "/ExamResults"].includes(location.pathname);
+  ["/StudentRecords", "/Grades", "/PortalAttendance", "/PortalExamResults"].includes(location.pathname);
 
   return (
       <div>
@@ -40,9 +41,10 @@ function App() {
             <Route path="/StudentRecords" element={<StudentRecords />} />
             <Route path="/Grades" element={<Grades />} />
             <Route path="/PortalAttendance" element={<PortalAttendance />} />
+            <Route path="/PortalExamResults" element={<PortalExamResults />} />
           </Routes>
         </main>
-        <Footer />
+        {!isPortalRoute && <Footer />}
       </div>
   );
 }

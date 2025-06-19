@@ -20,7 +20,7 @@ function PortalAttendance() {
       setTeacherSubjects(payload.subjects); // assumes array of subjects
     }
 
-    fetch('http://localhost:3000/get-students', {
+    fetch('http://localhost:5000/get-students', {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(res => res.json())
@@ -52,7 +52,7 @@ function PortalAttendance() {
   const handleAttendanceChange = async (admissionNum, subject, status) => {
     const token = sessionStorage.getItem('token');
     try {
-      const res = await fetch('http://localhost:3000/update-attendance', {
+      const res = await fetch('http://localhost:5000/update-attendance', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -143,19 +143,31 @@ function PortalAttendance() {
         {displayRoster.map((student, idx) => (
           <div key={idx} className="border rounded-lg shadow-sm mb-4">
             <div
-              className="p-4 cursor-pointer hover:bg-gray-50"
+              className="p-4 cursor-pointer hover:bg-gray-50 hover:rounded-lg"
               onClick={() => toggleStudentExpansion(student.admissionNum)}
             >
-              <div className="flex justify-between items-center">
-                <div className="flex flex-col sm:flex-row sm:gap-6 text-sm">
-                  <p className="font-semibold text-lg">{student.firstName} {student.lastName}</p>
-                  <p>Form: {student.form}</p>
-                  <p>Sex: {student.gender}</p>
-                  <p>DOB: {new Date(student.dateOfBirth).toLocaleDateString()}</p>
+              <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:gap-6">
+                    <p className="font-semibold text-lg">{student.firstName} {student.lastName}</p>
+                    <div className="flex flex-col sm:flex-row sm:gap-6 text-sm text-gray-600">
+                        <span>Form: {student.form}</span>
+                        <span>Sex: {student.gender}</span>
+                        <span>DOB: {new Date(student.dateOfBirth).toLocaleDateString()}</span>
+                    </div>
                 </div>
-                <span className="text-sm text-gray-500">
-                  {expanded.has(student.admissionNum) ? 'Hide Attendance' : 'Show Attendance'}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-500">
+                    {expanded.has(student.admissionNum) ? 'Hide Attendance' : 'Show Attendance'}
+                  </span>
+                  <svg 
+                    className={`w-5 h-5 transition-transform ${expanded.has(student.admissionNum) ? 'rotate-180' : ''}`}
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
               </div>
             </div>
 
