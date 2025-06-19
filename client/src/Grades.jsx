@@ -51,7 +51,7 @@ function Grades() {
         try {
             const token = sessionStorage.getItem('token');
 
-            const res = await fetch('http://localhost:5000/get-students', {
+            const res = await fetch('http://localhost:3000/get-students', {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -157,7 +157,7 @@ function Grades() {
 
                                                                             try {
                                                                                 const token = sessionStorage.getItem('token');
-                                                                                const res = await fetch('http://localhost:5000/update-grade', {
+                                                                                const res = await fetch('http://localhost:3000/update-grade', {
                                                                                     method: 'POST',
                                                                                     headers: {
                                                                                         'Content-Type': 'application/json',
@@ -257,7 +257,7 @@ function Grades() {
 
                                                     try {
                                                         const token = sessionStorage.getItem('token');
-                                                        const res = await fetch('http://localhost:5000/update-comment', {
+                                                        const res = await fetch('http://localhost:3000/update-comment', {
                                                             method: 'POST',
                                                             headers: {
                                                                 'Content-Type': 'application/json',
