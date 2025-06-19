@@ -290,56 +290,39 @@ router.post('/save-student', authenticateJWT, async (req, res) => {
     }
 });
 
-router.post('/update-grade', authenticateJWT, async (req, res) => {
-    try {
-        const isAdmin = req.user.isAdmin;
-        const teacherId = req.user.teacherId;
-        const { admissionNum, assessment, score, subject } = req.body;
-        const student = await Student.findOne({ admissionNum: admissionNum });
-        if (!student) {
-            return res.status(400).json({ error: "Student is not in database" });
-        }
-        
-        let grade;
-        if (isAdmin) {
-            grade = await Grade.findOne({ student: student._id, subject: subject, assessment: assessment });
-        } else {
-            grade = await Grade.findOne({ student: student._id, teacher: teacherId, assessment: assessment });
-        }
-
-        if (!grade) {
-            return res.status(400).json({ error: "Grade not found for this student and teacher" });
-        }
-
-        grade.score = score;
-        await grade.save();
-
-        res.status(200).json({ message: "Grade updated successfully", grade });
-    } catch (e) {
-        console.error(e);
-        res.status(500).json({ error: "Failed to update student grade" });
-    }
-});
-
 router.post('/update-attendance', authenticateJWT, async (req, res) => {
     try {
         const isAdmin = req.user.isAdmin;
         const teacherId = req.user.teacherId;
-        const { admissionNum, attended, teacher_id } = req.body;
+        const { admissionNum, attended, subject } = req.body;
+
         const student = await Student.findOne({ admissionNum: admissionNum });
         if (!student) {
             return res.status(400).json({ error: "Student is not in database" });
         }
-        
+
         let attendance;
         if (isAdmin) {
-            attendance = await Attendance.findOne({ student: student._id, teacher: teacher_id });
+            attendance = await Attendance.findOne({ student: student._id, subject: subject });
         } else {
             attendance = await Attendance.findOne({ student: student._id, teacher: teacherId });
         }
 
         if (!attendance) {
-            return res.status(400).json({ error: "Attendance not found for this student and teacher" });
+            // Try finding teacher for subject
+            const teacher = await Teacher.findOne({ subject });
+            if (!teacher) return res.status(400).json({ error: "No teacher found for subject" });
+
+            // Create new record
+            attendance = new Attendance({
+                student: student._id,
+                teacher: teacher._id,
+                subject,
+                attended
+            });
+
+            await attendance.save();
+            return res.status(200).json({ message: "Attendance created successfully", attendance });
         }
 
         attendance.attended = attended;
@@ -351,6 +334,56 @@ router.post('/update-attendance', authenticateJWT, async (req, res) => {
         res.status(500).json({ error: "Failed to update student attendance" });
     }
 });
+
+
+router.post('/update-attendance', authenticateJWT, async (req, res) => {
+    try {
+      const isAdmin = req.user.isAdmin;
+      const teacherId = req.user.teacherId;
+      const { admissionNum, attended, subject } = req.body;
+  
+      const student = await Student.findOne({ admissionNum });
+      if (!student) {
+        return res.status(400).json({ error: "Student is not in database" });
+      }
+  
+      let attendance;
+      if (isAdmin) {
+        attendance = await Attendance.findOne({ student: student._id, subject });
+      } else {
+        attendance = await Attendance.findOne({ student: student._id, teacher: teacherId });
+      }
+  
+      // 🔴 Fix: If no attendance record, create it
+      if (!attendance) {
+        const teacher = isAdmin
+          ? await Teacher.findOne({ subject }) // for admin, find by subject
+          : await Teacher.findById(teacherId); // for teacher, use their ID
+  
+        if (!teacher) return res.status(400).json({ error: "Teacher not found" });
+  
+        attendance = new Attendance({
+          student: student._id,
+          teacher: teacher._id,
+          subject,
+          attended
+        });
+  
+        await attendance.save();
+        return res.status(200).json({ message: "Attendance created successfully", attendance });
+      }
+  
+      // Update if it already exists
+      attendance.attended = attended;
+      await attendance.save();
+  
+      res.status(200).json({ message: "Attendance updated successfully", attendance });
+    } catch (e) {
+      console.error(e);
+      res.status(500).json({ error: "Failed to update student attendance" });
+    }
+  });
+  
 
 router.post('/update-comment', authenticateJWT, async (req, res) => {
     try {
