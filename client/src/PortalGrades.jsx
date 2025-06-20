@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-function Grades() {
+function PortalGrades() {
     const [name, setName] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -524,4 +524,4 @@ function Grades() {
     );
 }
 
-export default Grades;
+export default PortalGrades;

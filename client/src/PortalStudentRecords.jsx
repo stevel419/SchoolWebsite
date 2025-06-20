@@ -317,7 +317,7 @@ const StudentForm = () => {
     );
 };
 
-function StudentRecords() {
+function PortalStudentRecords() {
     const [name, setName] = useState('');
     const [openForm, setOpenForm] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -482,4 +482,4 @@ function StudentRecords() {
     );
 }
 
-export default StudentRecords;
+export default PortalStudentRecords;

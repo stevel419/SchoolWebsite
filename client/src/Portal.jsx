@@ -4,9 +4,9 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 const portalTiles = [
   { title: "Attendance", icon: faClipboardList, route: "/PortalAttendance" },
-  { title: "Grades", icon: faGraduationCap, route: "/Grades" },
+  { title: "Grades", icon: faGraduationCap, route: "/PortalGrades" },
   { title: "Exam Results", icon: faFileAlt, route: "/PortalExamResults" },
-  { title: "Student Records", icon: faUserPlus, route: "/StudentRecords" }
+  { title: "Student Records", icon: faUserPlus, route: "/PortalStudentRecords" }
 ];
 
 const Portal = () => {
