@@ -14,6 +14,8 @@ function PortalGrades() {
     const [expandedStudents, setExpandedStudents] = useState(new Set());
     const [filterForm, setFilterForm] = useState('');
     const [sortBy, setSortBy] = useState('name');
+    const [sortSubject, setSortSubject] = useState('');
+    const [sortOrder, setSortOrder] = useState('desc');
 
     const handleSearchStudent = async (e) => {
         e.preventDefault();
@@ -82,11 +84,65 @@ function PortalGrades() {
         });
     };
 
+    const calculateSubjectAverage = (student, subject) => {
+        const gradeForSubject = student.grades.find(g => g.subject === subject);
+        if (!gradeForSubject || !gradeForSubject.assessments) {
+            return { average: 0, letterGrade: 'N/A', hasGrades: false };
+        }
+        
+        const assessments = gradeForSubject.assessments || [];
+        const validScores = assessments.filter(a => a.score !== null && a.score !== undefined);
+        
+        if (validScores.length === 0) {
+            return { average: 0, letterGrade: 'N/A', hasGrades: false };
+        }
+        
+        const sum = validScores.reduce((acc, assessment) => acc + assessment.score, 0);
+        const average = sum / validScores.length;
+        
+        let letterGrade;
+        if (student.form >= 5) {
+            if (average >= 80) letterGrade = 'A';
+            else if (average >= 70) letterGrade = 'B';
+            else if (average >= 60) letterGrade = 'C';
+            else if (average >= 50) letterGrade = 'D';
+            else if (average >= 40) letterGrade = 'E';
+            else if (average >= 35) letterGrade = 'S';
+            else letterGrade = 'F';
+        } else {
+            if (average >= 75) letterGrade = 'A';
+            else if (average >= 65) letterGrade = 'B';
+            else if (average >= 45) letterGrade = 'C';
+            else if (average >= 30) letterGrade = 'D';
+            else letterGrade = 'F';
+        }
+        
+        return { average, letterGrade, hasGrades: true };
+    };
+
+    const getAllSubjects = () => {
+        const subjects = new Set();
+        roster.forEach(student => {
+            if (student.subjects && Array.isArray(student.subjects)) {
+                student.subjects.forEach(subject => {
+                    const gradeForSubject = student.grades.find(g => g.subject === subject);
+                    if (gradeForSubject) {
+                        subjects.add(subject);
+                    }
+                });
+            }
+        });
+        return Array.from(subjects).sort();
+    };
+
     const getFilteredAndSortedRoster = () => {
         let filtered = roster;
         
         if (filterForm) {
             filtered = filtered.filter(student => student.form === Number(filterForm));
+        }
+        if (sortSubject) {
+            filtered = filtered.filter(student => Array.isArray(student.subjects) && student.subjects.includes(sortSubject));
         }
         
         return filtered.sort((a, b) => {
@@ -97,6 +153,13 @@ function PortalGrades() {
                     return a.form - b.form;
                 case 'dateOfBirth':
                     return new Date(a.dateOfBirth) - new Date(b.dateOfBirth);
+                case 'subjectGrades':
+                    if (!sortSubject) return 0;
+                    
+                    const aAverage = calculateSubjectAverage(a, sortSubject).average;
+                    const bAverage = calculateSubjectAverage(b, sortSubject).average;
+                    
+                    return sortOrder === 'asc' ? aAverage - bAverage : bAverage - aAverage;
                 default:
                     return 0;
             }
@@ -108,37 +171,36 @@ function PortalGrades() {
             <div className="mt-4 border-t pt-4 space-y-6">
                 {student.subjects && student.subjects.length > 0 ? (
                     student.subjects.map((s, idx) => {
-                        const gradesForSubject = student.grades.filter(g => g.subject === s);
-                        gradesForSubject.sort((a, b) => {
-                            const order = { 'Midterm': 1, 'Final': 2 };
-                            return (order[a.assessment] || 999) - (order[b.assessment] || 999);
+                        const gradeForSubject = student.grades.find(g => g.subject === s);
+                        
+                        if (!gradeForSubject) return null;
+                        if (!gradeForSubject.assessments) {
+                            return (
+                                <div key={idx} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <h4 className="text-lg font-semibold text-gray-800 mb-3">
+                                        <span className="flex items-center">
+                                            <span className="w-3 h-3 bg-emerald-500 rounded-full mr-2"></span>
+                                            {s}
+                                        </span>
+                                    </h4>
+                                    <div className="bg-white rounded-md p-3 border border-gray-200">
+                                        <span className="text-gray-500 text-sm">No grades available</span>
+                                    </div>
+                                </div>
+                            );
+                        }
+                        // Get and sort assessments
+                        const assessments = gradeForSubject.assessments || [];
+                        const sortedAssessments = assessments.sort((a, b) => {
+                            const order = { 'Midterm 1': 1, 'Endterm': 2, 'Midterm 2': 3, 'Final': 4 };
+                            return (order[a.name] || 999) - (order[b.name] || 999);
                         });
+                        // Calculate overall grade
+                        const overall = calculateSubjectAverage(student, s);
+
                         const commentForSubject = student.comments.find(c => c.subject === s);
                         const commentKey = `${student.admissionNum}-${s}`;
                         const existingComment = commentForSubject?.comment || '';
-                        
-                        if (gradesForSubject.length === 0) return null;
-
-                        const sum = gradesForSubject.reduce((accumulator, grade) => accumulator + grade.score, 0);
-                        const avg = sum / gradesForSubject.length;
-                        let overall;
-                        if (student.form >= 5) {
-                            if (avg >= 80) overall = 'A';
-                            else if (avg >= 70) overall = 'B';
-                            else if (avg >= 60) overall = 'C';
-                            else if (avg >= 50) overall = 'D';
-                            else if (avg >= 40) overall = 'E';
-                            else if (avg >= 35) overall = 'S';
-                            else if (avg >= 0) overall = 'F';
-                            else overall = 'N/A';
-                        } else {
-                            if (avg >= 75) overall = 'A';
-                            else if (avg >= 65) overall = 'B';
-                            else if (avg >= 45) overall = 'C';
-                            else if (avg >= 30) overall = 'D';
-                            else if (avg >= 0) overall = 'F';
-                            else overall = 'N/A';
-                        }
 
                         return (
                             <div key={idx} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
@@ -149,129 +211,139 @@ function PortalGrades() {
                                             {s}
                                         </span>
                                         <span className="text-base px-2 py-1 rounded">
-                                            Overall: {avg.toFixed(1)}% ({overall})
+                                            Overall: {overall.average.toFixed(1)}% ({overall.letterGrade})
                                         </span>
                                     </h4>
                                     {/* Grades Section */}
                                     <div className="mb-4">
                                         <h5 className="text-sm font-medium text-gray-700 mb-2">Assessment Scores</h5>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                            {gradesForSubject.length > 0 ? (
-                                                gradesForSubject.map((g, i) => (
-                                                    <div key={i} className="bg-white rounded-md p-2 border border-gray-200 shadow-sm">
-                                                        <div className="flex items-center justify-between">
-                                                            <label className="text-sm font-medium text-gray-700">{g.assessment}:</label>
-                                                            <div className="flex items-center gap-2">
-                                                                <input
-                                                                    type="number"
-                                                                    defaultValue={g.score}
-                                                                    min="0"
-                                                                    max="100"
-                                                                    className="border border-gray-300 px-1 py-1 rounded-md w-20 text-center focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition duration-200"
-                                                                    onChange={(e) => {
-                                                                        const value = e.target.value;
-                                                                        setEditedScores(prev => ({
-                                                                            ...prev,
-                                                                            [student.admissionNum + "-" + s + "-" + g.assessment]: value
-                                                                        }));
-                                                                    }}
-                                                                    onBlur={async (e) => {
-                                                                        const updatedScore = e.target.value;
-                                                                        const key = student.admissionNum + "-" + s + "-" + g.assessment;
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                                            {sortedAssessments.map((assessment, i) => (
+                                                <div key={i} className="bg-white rounded-md p-2 border border-gray-200 shadow-sm">
+                                                    <div className="flex items-center justify-between">
+                                                        <label className="text-sm font-medium text-gray-700">{assessment.name}:</label>
+                                                        <div className="flex items-center gap-2">
+                                                            <input
+                                                                type="number"
+                                                                value={editedScores[student.admissionNum + "-" + s + "-" + assessment.name] !== undefined 
+                                                                        ? editedScores[student.admissionNum + "-" + s + "-" + assessment.name] 
+                                                                        : (assessment.score || '')}
+                                                                min="0"
+                                                                max="100"
+                                                                placeholder="--"
+                                                                className="border border-gray-300 px-1 py-1 rounded-md w-20 text-center focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition duration-200"
+                                                                onChange={(e) => {
+                                                                    const value = e.target.value;
+                                                                    setEditedScores(prev => ({
+                                                                        ...prev,
+                                                                        [student.admissionNum + "-" + s + "-" + assessment.name]: value
+                                                                    }));
+                                                                }}
+                                                                onBlur={async (e) => {
+                                                                    const updatedScore = e.target.value;
+                                                                    const key = student.admissionNum + "-" + s + "-" + assessment.name;
+                                                                    
+                                                                    const scoreValue = updatedScore === '' ? null : parseFloat(updatedScore);
+                                                                    const currentScore = assessment.score;
 
-                                                                        if (updatedScore !== String(g.score)) {
-                                                                            setUpdateStatus(prev => ({ ...prev, [key]: 'loading' }));
+                                                                    if (scoreValue !== currentScore) {
+                                                                        setUpdateStatus(prev => ({ ...prev, [key]: 'loading' }));
 
-                                                                            try {
-                                                                                const token = sessionStorage.getItem('token');
-                                                                                const res = await fetch('http://localhost:5000/update-grade', {
-                                                                                    method: 'POST',
-                                                                                    headers: {
-                                                                                        'Content-Type': 'application/json',
-                                                                                        'Authorization': 'Bearer ' + token
-                                                                                    },
-                                                                                    body: JSON.stringify({
-                                                                                        admissionNum: student.admissionNum,
-                                                                                        assessment: g.assessment,
-                                                                                        score: updatedScore,
-                                                                                        subject: s,
-                                                                                    })
-                                                                                });
+                                                                        try {
+                                                                            const token = sessionStorage.getItem('token');
+                                                                            const res = await fetch('http://localhost:5000/update-grade', {
+                                                                                method: 'POST',
+                                                                                headers: {
+                                                                                    'Content-Type': 'application/json',
+                                                                                    'Authorization': 'Bearer ' + token
+                                                                                },
+                                                                                body: JSON.stringify({
+                                                                                    admissionNum: student.admissionNum,
+                                                                                    name: assessment.name,
+                                                                                    score: scoreValue,
+                                                                                    subject: s,
+                                                                                })
+                                                                            });
 
-                                                                                const data = await res.json();
+                                                                            const data = await res.json();
 
-                                                                                if (!res.ok) {
-                                                                                    throw new Error(data.error || 'Failed to update');
-                                                                                }
-                                                                                setUpdateStatus(prev => ({ ...prev, [key]: 'success' }));
-
-                                                                                const updateStudentGrades = (studentList) => {
-                                                                                    return studentList.map(studentItem => {
-                                                                                        if (studentItem.admissionNum === student.admissionNum) {
-                                                                                            return {
-                                                                                                ...studentItem,
-                                                                                                grades: studentItem.grades.map(grade => {
-                                                                                                    if (grade.subject === s && grade.assessment === g.assessment) {
-                                                                                                        return { ...grade, score: parseFloat(updatedScore) };
-                                                                                                    }
-                                                                                                    return grade;
-                                                                                                })
-                                                                                            };
-                                                                                        }
-                                                                                        return studentItem;
-                                                                                    });
-                                                                                };
-                                                                                setStudentData(updateStudentGrades);
-                                                                                setRoster(updateStudentGrades);
-                                                                                
-                                                                                // Clear success message after 3 seconds
-                                                                                setTimeout(() => {
-                                                                                    setUpdateStatus(prev => {
-                                                                                        const updated = { ...prev };
-                                                                                        delete updated[key];
-                                                                                        return updated;
-                                                                                    });
-                                                                                }, 3000);
-                                                                            } catch (e) {
-                                                                                setUpdateStatus(prev => ({ ...prev, [key]: 'error' }));
+                                                                            if (!res.ok) {
+                                                                                throw new Error(data.error || 'Failed to update');
                                                                             }
+                                                                            
+                                                                            setUpdateStatus(prev => ({ ...prev, [key]: 'success' }));
+
+                                                                            const updateStudentGrades = (studentList) => {
+                                                                                return studentList.map(studentItem => {
+                                                                                    if (studentItem.admissionNum === student.admissionNum) {
+                                                                                        return {
+                                                                                            ...studentItem,
+                                                                                            grades: studentItem.grades.map(grade => {
+                                                                                                if (grade.subject === s) {
+                                                                                                    return {
+                                                                                                        ...grade,
+                                                                                                        assessments: grade.assessments.map(ass => {
+                                                                                                            if (ass.name === assessment.name) {
+                                                                                                                return { ...ass, score: scoreValue };
+                                                                                                            }
+                                                                                                            return ass;
+                                                                                                        })
+                                                                                                    };
+                                                                                                }
+                                                                                                return grade;
+                                                                                            })
+                                                                                        };
+                                                                                    }
+                                                                                    return studentItem;
+                                                                                });
+                                                                            };
+                                                                            setStudentData(updateStudentGrades);
+                                                                            setRoster(updateStudentGrades);
+                                                                            
+                                                                            // Clear success message after 3 seconds
+                                                                            setTimeout(() => {
+                                                                                setUpdateStatus(prev => {
+                                                                                    const updated = { ...prev };
+                                                                                    delete updated[key];
+                                                                                    return updated;
+                                                                                });
+                                                                            }, 3000);
+                                                                        } catch (e) {
+                                                                            setUpdateStatus(prev => ({ ...prev, [key]: 'error' }));
+                                                                            console.error('Error updating grade:', e);
                                                                         }
-                                                                    }}
-                                                                />
-                                                                <span className="text-gray-500">/100</span>
-                                                            </div>
-                                                        </div>
-                                                        <div className="mt-1 min-h-[20px]">
-                                                            {updateStatus[`${student.admissionNum}-${s}-${g.assessment}`] === 'loading' && (
-                                                                <div className="flex items-center gap-1">
-                                                                    <div className="w-3 h-3 border border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                                                                    <span className="text-xs text-blue-600">Saving...</span>
-                                                                </div>
-                                                            )}
-                                                            {updateStatus[`${student.admissionNum}-${s}-${g.assessment}`] === 'success' && (
-                                                                <div className="flex items-center gap-1">
-                                                                    <svg className="w-3 h-3 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                                                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                                                    </svg>
-                                                                    <span className="text-xs text-green-600">Saved</span>
-                                                                </div>
-                                                            )}
-                                                            {updateStatus[`${student.admissionNum}-${s}-${g.assessment}`] === 'error' && (
-                                                                <div className="flex items-center gap-1">
-                                                                    <svg className="w-3 h-3 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                                                                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                                                                    </svg>
-                                                                    <span className="text-xs text-red-500">Error saving</span>
-                                                                </div>
-                                                            )}
+                                                                    }
+                                                                }}
+                                                            />
+                                                            <span className="text-gray-500">/100</span>
                                                         </div>
                                                     </div>
-                                                ))
-                                            ) : (
-                                                <div className="bg-white rounded-md p-3 border border-gray-200">
-                                                    <span className="text-gray-500 text-sm">No grades available</span>
+                                                    <div className="mt-1 min-h-[20px]">
+                                                        {updateStatus[`${student.admissionNum}-${s}-${assessment.name}`] === 'loading' && (
+                                                            <div className="flex items-center gap-1">
+                                                                <div className="w-3 h-3 border border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                                                                <span className="text-xs text-blue-600">Saving...</span>
+                                                            </div>
+                                                        )}
+                                                        {updateStatus[`${student.admissionNum}-${s}-${assessment.name}`] === 'success' && (
+                                                            <div className="flex items-center gap-1">
+                                                                <svg className="w-3 h-3 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                                </svg>
+                                                                <span className="text-xs text-green-600">Saved</span>
+                                                            </div>
+                                                        )}
+                                                        {updateStatus[`${student.admissionNum}-${s}-${assessment.name}`] === 'error' && (
+                                                            <div className="flex items-center gap-1">
+                                                                <svg className="w-3 h-3 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                                                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                                                </svg>
+                                                                <span className="text-xs text-red-500">Error saving</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                            )}
+                                            ))}
                                         </div>
                                     </div>
                                 </div>
@@ -333,6 +405,7 @@ function PortalGrades() {
                                                         }, 3000);
                                                     } catch (e) {
                                                         setUpdateCommentStatus(prev => ({ ...prev, [commentKey]: 'error' }));
+                                                        console.error('Error updating comment:', e);
                                                     }
                                                 }
                                             }}
@@ -384,11 +457,19 @@ function PortalGrades() {
     };
 
     const uniqueForms = [...new Set(roster.map(student => student.form))].sort();
+    const allSubjects = getAllSubjects();
     const filteredRoster = getFilteredAndSortedRoster();
 
     useEffect(() => {
         handleGetRoster();
     }, []);
+
+    useEffect(() => {
+        if (sortBy !== 'subjectGrades') {
+            setSortSubject('');
+            setSortOrder('desc');
+        }
+    }, [sortBy]);
 
     return (
         <section className="pt-40 pb-20 px-4 max-w-6xl mx-auto">
@@ -446,7 +527,7 @@ function PortalGrades() {
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
                     <h2 className="text-2xl font-semibold text-gray-800">Roster ({filteredRoster.length} students)</h2>
                     {/* Filter and Sort Controls */}
-                    <div className="flex flex-col sm:flex-row gap-3">
+                    <div className="flex flex-col md:flex-row gap-3">
                         <select
                             value={filterForm}
                             onChange={(e) => setFilterForm(e.target.value)}
@@ -466,7 +547,30 @@ function PortalGrades() {
                             <option value="name">Sort by Name</option>
                             <option value="form">Sort by Form</option>
                             <option value="dateOfBirth">Sort by Age</option>
+                            <option value="subjectGrades">Sort by Subject Grades</option>
                         </select>
+                        {sortBy === 'subjectGrades' && (
+                            <>
+                                <select
+                                    value={sortSubject}
+                                    onChange={(e) => setSortSubject(e.target.value)}
+                                    className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                                >
+                                    <option value="">Select Subject</option>
+                                    {allSubjects.map(subject => (
+                                        <option key={subject} value={subject}>{subject}</option>
+                                    ))}
+                                </select>
+                                <select
+                                    value={sortOrder}
+                                    onChange={(e) => setSortOrder(e.target.value)}
+                                    className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                                >
+                                    <option value="desc">Highest to Lowest</option>
+                                    <option value="asc">Lowest to Highest</option>
+                                </select>
+                            </>
+                        )}
                     </div>
                 </div>
 
