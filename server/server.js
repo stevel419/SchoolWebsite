@@ -3,6 +3,8 @@ const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db');
 const routes = require('./routes');
+const path = require('path'); 
+
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -15,6 +17,7 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization']
 };
 app.use(cors(corsOptions));
+app.use(express.static(path.join(__dirname, '../public')));
 
 app.use(express.json());
 

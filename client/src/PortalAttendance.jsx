@@ -16,8 +16,8 @@ function PortalAttendance() {
 
     const payload = JSON.parse(atob(token.split('.')[1]));
     setIsAdmin(payload.isAdmin);
-    if (!payload.isAdmin && payload.subjects) {
-      setTeacherSubjects(payload.subjects); // assumes array of subjects
+    if (!payload.isAdmin && payload.subject) {
+      setTeacherSubjects(payload.subject);
     }
 
     fetch('http://localhost:3000/get-students', {
@@ -39,14 +39,24 @@ function PortalAttendance() {
     });
   };
 
-  const handleSearch = () => {
-    const term = searchTerm.toLowerCase();
-    const result = roster.filter(
-      s =>
-        s.firstName.toLowerCase().includes(term) ||
-        s.lastName.toLowerCase().includes(term)
-    );
-    setFiltered(result);
+  const handleSearch = async () => {
+    const token = sessionStorage.getItem('token');
+    try {
+      const res = await fetch(
+        `http://localhost:3000/search-students?name=${encodeURIComponent(searchTerm)}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      const data = await res.json();
+      if (res.ok) {
+        setFiltered(data);
+      } else {
+        console.error(data.error || 'Failed to fetch students');
+      }
+    } catch (err) {
+      console.error('Search error:', err.message);
+    }
   };
 
   const handleAttendanceChange = async (admissionNum, subject, status) => {
@@ -165,7 +175,6 @@ function PortalAttendance() {
                   const attendance = student.attendance?.find(a => a.subject === subject);
                   const status = attendance?.attended === true ? 'Present' : 'Absent';
 
-                  // Restrict subject view for teachers
                   if (!isAdmin && !teacherSubjects.includes(subject)) return null;
 
                   return (

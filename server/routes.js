@@ -52,7 +52,8 @@ router.post('/login', async (req, res) => {
 
         const token = jwt.sign({
             isAdmin: teacher.isAdmin,
-            teacherId: teacher._id
+            teacherId: teacher._id,
+            subject: teacher.subject
         }, process.env.JWT_SECRET, {expiresIn: '2h'});
 
         res.status(200).json({ success: true, token, expiresIn: 7200 });
@@ -354,7 +355,7 @@ router.post('/update-attendance', authenticateJWT, async (req, res) => {
         attendance = await Attendance.findOne({ student: student._id, teacher: teacherId });
       }
   
-      // 🔴 Fix: If no attendance record, create it
+      // Fix: If no attendance record, create it
       if (!attendance) {
         const teacher = isAdmin
           ? await Teacher.findOne({ subject }) // for admin, find by subject
@@ -415,5 +416,245 @@ router.post('/update-comment', authenticateJWT, async (req, res) => {
         res.status(500).json({ error: "Failed to update student comment" });
     }
 });
+
+const PDFDocument = require('pdfkit');
+const nodemailer = require('nodemailer');
+const { Readable } = require('stream');
+
+function bufferToStream(buffer) {
+  const stream = new Readable();
+  stream.push(buffer);
+  stream.push(null);
+  return stream;
+}
+
+router.post('/submit-application', async (req, res) => {
+  const {
+    firstName, lastName, DOB, sex, religion,
+    gFirstName, gLastName, gNumber, gOccupation, address
+  } = req.body;
+
+  const doc = new PDFDocument();
+  let pdfBuffer = Buffer.alloc(0);
+
+  doc.on('data', (chunk) => {
+    pdfBuffer = Buffer.concat([pdfBuffer, chunk]);
+  });
+
+  doc.on('end', async () => {
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
+    });
+
+    try {
+      await transporter.sendMail({
+        from: `"Kiguruyembe School" <${process.env.EMAIL_USER}>`,
+        to: 'i.mathew160@gmail.com', // Change to actual recipient
+        subject: 'New Application Submission',
+        text: `New application from ${firstName} ${lastName}`,
+        attachments: [{
+          filename: `${firstName}_${lastName}_Application.pdf`,
+          content: pdfBuffer
+        }]
+      });
+
+      res.status(200).json({ message: 'Application submitted successfully' });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Email failed to send' });
+    }
+  });
+
+  doc.fontSize(18).text("Student Application", { align: 'center' }).moveDown();
+  doc.fontSize(12).text(`Name: ${firstName} ${lastName}`);
+  doc.text(`DOB: ${DOB}`);
+  doc.text(`Sex: ${sex}`);
+  doc.text(`Religion: ${religion}`);
+  doc.moveDown();
+  doc.text(`Guardian: ${gFirstName} ${gLastName}`);
+  doc.text(`Phone: ${gNumber}`);
+  doc.text(`Occupation: ${gOccupation}`);
+  doc.text(`Address: ${address}`);
+  doc.end();
+});
+
+
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+// ------------------------
+// Multer setup to save into public/
+// ------------------------
+const destinationPath = path.join(__dirname, '../public')
+console.log('Saving uploaded files to:', destinationPath)
+
+const storage = multer.diskStorage({
+    destination: path.join(__dirname, '../client/public'),
+    filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`)
+  });
+const upload = multer({ storage });
+
+const slidesFile = path.join(__dirname, 'data', 'slides.json');
+const staffFile = path.join(__dirname, 'data', 'staff.json');
+
+// ------------------------
+// Helper functions
+// ------------------------
+function readJson(filePath) {
+  try {
+    return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+  } catch (e) {
+    return [];
+  }
+}
+
+function writeJson(filePath, data) {
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+}
+
+// ------------------------
+// Get all slides
+// ------------------------
+router.get('/get-slides', (req, res) => {
+
+  try {
+    res.status(200).json(readJson(slidesFile));
+  } catch (e) {
+    res.status(500).json({ error: 'Error reading slides file' });
+  }
+});
+
+// ------------------------
+// Get all staff
+// ------------------------
+router.get('/get-staff', (req, res) => {
+  try {
+    res.status(200).json(readJson(staffFile));
+  } catch (e) {
+    res.status(500).json({ error: 'Error reading staff file' });
+  }
+});
+
+// ------------------------
+// Add new slide
+// ------------------------
+router.post('/add-slide', upload.single('image'), (req, res) => {
+    console.log('req.file:', req.file); // debug output
+
+  if (!req.file || !req.body.text) {
+    return res.status(400).json({ error: 'Missing image or text' });
+  }
+
+  try {
+    const filePath = `/${req.file.filename}`; // public/filename
+    const slides = readJson(slidesFile);
+    slides.push({ image: filePath, text: req.body.text });
+    writeJson(slidesFile, slides);
+    res.status(200).json({ message: 'Slide added successfully' });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Could not add slide' });
+  }
+});
+
+// ------------------------
+// Delete slide by index
+// ------------------------
+router.delete('/delete-slide/:index', (req, res) => {
+  try {
+    const index = parseInt(req.params.index, 10);
+    const slides = readJson(slidesFile);
+
+    if (isNaN(index) || index < 0 || index >= slides.length) {
+      return res.status(400).json({ error: 'Invalid index' });
+    }
+
+    const [deletedSlide] = slides.splice(index, 1);
+    writeJson(slidesFile, slides);
+
+    // Delete image file
+    const filePath = path.join(__dirname, '../public', path.basename(deletedSlide.image));
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+
+    res.status(200).json({ message: 'Slide deleted successfully' });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Error deleting slide' });
+  }
+});
+
+// ------------------------
+// Add new staff
+// ------------------------
+router.post('/add-staff', upload.single('image'), (req, res) => {
+  if (!req.file || !req.body.name || !req.body.position) {
+    return res.status(400).json({ error: 'Missing image, name, or position' });
+  }
+
+  try {
+    const filePath = `/${req.file.filename}`; // public/filename
+    const staff = readJson(staffFile);
+    staff.push({ image: filePath, name: req.body.name, position: req.body.position });
+    writeJson(staffFile, staff);
+    res.status(200).json({ message: 'Staff added successfully' });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Could not add staff' });
+  }
+});
+
+// ------------------------
+// Delete staff by index
+// ------------------------
+router.delete('/delete-staff/:index', (req, res) => {
+  try {
+    const index = parseInt(req.params.index, 10);
+    const staff = readJson(staffFile);
+
+    if (isNaN(index) || index < 0 || index >= staff.length) {
+      return res.status(400).json({ error: 'Invalid index' });
+    }
+
+    const [deletedStaff] = staff.splice(index, 1);
+    writeJson(staffFile, staff);
+
+    // Delete image file
+    const filePath = path.join(__dirname, '../public', path.basename(deletedStaff.image));
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+
+    res.status(200).json({ message: 'Staff deleted successfully' });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Error deleting staff' });
+  }
+});
+
+  
+
+router.post('/check-password', (req, res) => {
+    const { password } = req.body;
+    if (password === process.env.ADMIN_PASSWORD) {
+      return res.status(200).send('ok');
+    }
+    return res.status(401).send('Unauthorized');
+  });
+  
+
+
+
+
+
+
+
+
+
+
+
+
 
 module.exports = router;
