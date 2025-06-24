@@ -12,9 +12,8 @@ const PortalNav = ({ isOpen, toggleMenu }) => {
 
   const navItems = [
     { id: 1, text: 'Attendance', slug: '/PortalAttendance' },
-    { id: 2, text: 'Grades', slug: '/Grades' },
-    { id: 3, text: 'Exam Results', slug: '/PortalExamResults' },
-    { id: 4, text: 'Student Records', slug: '/StudentRecords' }
+    { id: 2, text: 'Grades', slug: '/PortalGrades' },
+    { id: 3, text: 'Student Records', slug: '/PortalStudentRecords' }
   ];
 
   return (

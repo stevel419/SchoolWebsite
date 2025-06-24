@@ -41,9 +41,9 @@ const StudentForm = () => {
         try {
             const guardian = {name: gName, phone: gNumber, occupation: gOccupation};
             const studentData = {
-                admissionNum: Number(admissionNum), 
-                firstName, 
-                lastName, 
+                admissionNum: admissionNum.trim(),
+                firstName: firstName.trim(),
+                lastName: lastName.trim(),
                 dateOfBirth: new Date(DOB), 
                 gender: sex, 
                 religion, 
@@ -103,7 +103,7 @@ const StudentForm = () => {
                                 Admission Number
                             </label>
                             <input
-                                type="number"
+                                type="text"
                                 required
                                 value={admissionNum}
                                 onChange={(e) => setAdmissionNum(e.target.value)}
@@ -317,7 +317,7 @@ const StudentForm = () => {
     );
 };
 
-function StudentRecords() {
+function PortalStudentRecords() {
     const [name, setName] = useState('');
     const [openForm, setOpenForm] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -430,7 +430,31 @@ function StudentRecords() {
                                             <ul className="ml-4 list-disc space-y-2">
                                                 {student.subjects.map((s, idx) => {
                                                 // Filter data
-                                                const gradesForSubject = student.grades.filter(g => g.subject === s);
+                                                const gradeForSubject = student.grades.find(g => g.subject === s);
+                                                const assessments = gradeForSubject.assessments || [];
+                                                // Calculate average
+                                                const validScores = assessments.filter(a => a.score !== null && a.score !== undefined);
+                                                const sum = validScores.reduce((accumulator, assessment) => accumulator + assessment.score, 0);
+                                                const avg = validScores.length > 0 ? sum / validScores.length : 0;
+                                                // Determine overall grade
+                                                let overall;
+                                                if (validScores.length === 0) {
+                                                    overall = 'N/A';
+                                                } else if (student.form >= 5) {
+                                                    if (avg >= 80) overall = 'A';
+                                                    else if (avg >= 70) overall = 'B';
+                                                    else if (avg >= 60) overall = 'C';
+                                                    else if (avg >= 50) overall = 'D';
+                                                    else if (avg >= 40) overall = 'E';
+                                                    else if (avg >= 35) overall = 'S';
+                                                    else overall = 'F';
+                                                } else {
+                                                    if (avg >= 75) overall = 'A';
+                                                    else if (avg >= 65) overall = 'B';
+                                                    else if (avg >= 45) overall = 'C';
+                                                    else if (avg >= 30) overall = 'D';
+                                                    else overall = 'F';
+                                                }
                                                 const attendanceForSubject = student.attendance.find(a => a.subject === s);
                                                 const commentForSubject = student.comments.find(c => c.subject === s);
 
@@ -438,10 +462,8 @@ function StudentRecords() {
                                                     <li key={idx}>
                                                         <p className="font-medium">{s}</p> →{' '}
                                                         <span>
-                                                            Grades: {gradesForSubject.length > 0 ? (
-                                                                gradesForSubject.map((g, i) => (
-                                                                    <span key={i}>{g.assessment}: {g.score}{i < gradesForSubject.length - 1 ? ', ' : ''}</span>
-                                                                ))
+                                                            Overall Grade: {gradeForSubject ? (
+                                                                <span>{validScores.length > 0 ? avg.toFixed(1) : 'N/A'}% ({overall})</span>
                                                             ) : 'N/A'} <span className="font-bold">|</span>{' '}
                                                             Attendance: {attendanceForSubject.attended ? '✅' : '❌'} <span className="font-bold">|</span>{' '}
                                                             Comment: {commentForSubject ? commentForSubject.comment || 'None' : 'N/A'}
@@ -482,4 +504,4 @@ function StudentRecords() {
     );
 }
 
-export default StudentRecords;
+export default PortalStudentRecords;

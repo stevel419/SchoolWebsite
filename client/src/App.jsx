@@ -12,8 +12,8 @@ import PortalSignupGate from './PortalSignupGate.jsx';
 import PortalSignup from "./PortalSignup.jsx";
 import Portal from "./Portal.jsx";
 import PortalHeader from './PortalHeader.jsx';
-import StudentRecords from "./StudentRecords.jsx";
-import Grades from "./Grades.jsx";
+import PortalStudentRecords from "./PortalStudentRecords.jsx";
+import PortalGrades from "./PortalGrades.jsx";
 import PortalAttendance from "./PortalAttendance.jsx";
 import UpdateWebsite from './components/UpdateWebsite.jsx';
 
@@ -21,7 +21,7 @@ function App() {
   const location = useLocation();
 
   const isPortalRoute = location.pathname.startsWith("/Portal") || 
-  ["/StudentRecords", "/Grades", "/Attendance", "/ExamResults"].includes(location.pathname);
+  ["/PortalStudentRecords", "/PortalGrades", "/PortalAttendance"].includes(location.pathname);
 
   return (
       <div>
@@ -38,13 +38,13 @@ function App() {
             <Route path="/PortalSignupGate" element={<PortalSignupGate />} />
             <Route path="/PortalSignup" element={<PortalSignup />} />
             <Route path="/Portal" element={<Portal />} />
-            <Route path="/StudentRecords" element={<StudentRecords />} />
-            <Route path="/Grades" element={<Grades />} />
+            <Route path="/PortalStudentRecords" element={<PortalStudentRecords />} />
+            <Route path="/PortalGrades" element={<PortalGrades />} />
             <Route path="/PortalAttendance" element={<PortalAttendance />} />
             <Route path="/update-website" element={<UpdateWebsite />} />
             </Routes>
         </main>
-        <Footer />
+        {!isPortalRoute && <Footer />}
       </div>
   );
 }

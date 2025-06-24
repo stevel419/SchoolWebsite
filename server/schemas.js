@@ -36,7 +36,7 @@ const teacherSchema = new mongoose.Schema({
 
 const studentSchema = new mongoose.Schema({
     admissionNum: {
-        type: Number,
+        type: String,
         required: true,
         unique: true
     },
@@ -97,16 +97,18 @@ const gradeSchema = new mongoose.Schema({
         ref: 'Teacher',
         required: true
     },
-    assessment: {
-        type: String,
-        required: true
-    },
-    score: {
-        type: Number,
-        required: true,
-        min: 0,
-        max: 100
-    },
+    assessments: [{
+        name: {
+            type: String,
+            required: true
+        },
+        score: {
+            type: Number,
+            default: null,
+            min: 0,
+            max: 100
+        }
+    }],
     subject: {
         type: String,
         required: true
