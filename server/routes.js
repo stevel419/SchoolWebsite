@@ -218,7 +218,7 @@ router.post('/save-student', authenticateJWT, async (req, res) => {
             return res.status(400).json({ error: "Please ask an admin to add student" });
         }
 
-        const { admissionNum, firstName, lastName, dateOfBirth, gender, religion, guardian, address, form, subjects } = req.body;
+        const { admissionNum, firstName, lastName, dateOfBirth, gender, religion, guardian, address, form, subjects, isActive } = req.body;
 
         const existingStudent = await Student.findOne({ admissionNum }).session(session);
         if (existingStudent) {
@@ -237,7 +237,8 @@ router.post('/save-student', authenticateJWT, async (req, res) => {
             guardian,
             address,
             form,
-            subjects
+            subjects,
+            isActive
         });
         const savedStudent = await student.save({ session });
 

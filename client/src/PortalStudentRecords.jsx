@@ -9,6 +9,7 @@ const StudentForm = () => {
     const [religion, setReligion] = useState('');
     const [form, setForm] = useState('');
     const [subjects, setSubjects] = useState(['']);
+    const [isActive, setIsActive] = useState(null);
     const [gName, setGName] = useState('');
     const [gNumber, setGNumber] = useState('');
     const [gOccupation, setGOccupation] = useState('');
@@ -50,7 +51,8 @@ const StudentForm = () => {
                 guardian, 
                 address, 
                 form: Number(form), 
-                subjects: subjects.filter(subject => subject.trim() !== '')
+                subjects: subjects.filter(subject => subject.trim() !== ''),
+                isActive
             };
             const token = sessionStorage.getItem('token');
 
@@ -75,6 +77,7 @@ const StudentForm = () => {
                 setReligion('');
                 setForm('');
                 setSubjects(['']);
+                setIsActive(null);
                 setGName('');
                 setGNumber('');
                 setGOccupation('');
@@ -230,6 +233,37 @@ const StudentForm = () => {
                             >
                                 Add Subject
                             </button>
+                        </div>
+                    </div>
+                    <div>
+                        <label className="block text-gray-700 font-medium mb-2">
+                            Enrollment Status
+                        </label>
+                        <div className="space-y-2">
+                            <label className="flex items-center">
+                                <input
+                                    type="radio"
+                                    name="status"
+                                    value="active"
+                                    onChange={() => setIsActive(true)}
+                                    required
+                                    checked={isActive === true}
+                                    className="w-4 h-4 text-emerald-600 bg-gray-100 border-gray-300"
+                                />
+                                <span className="ml-2 text-gray-700">Active</span>
+                            </label>
+                            <label className="flex items-center">
+                                <input
+                                    type="radio"
+                                    name="status"
+                                    value="graduated"
+                                    onChange={() => setIsActive(false)}
+                                    required
+                                    checked={isActive === false}
+                                    className="w-4 h-4 text-emerald-600 bg-gray-100 border-gray-300"
+                                />
+                                <span className="ml-2 text-gray-700">Graduated</span>
+                            </label>
                         </div>
                     </div>
                 </div>

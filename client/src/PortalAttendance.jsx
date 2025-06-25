@@ -25,8 +25,9 @@ function PortalAttendance() {
     })
       .then(res => res.json())
       .then(data => {
-        setRoster(data);
-        setFiltered(data);
+        const activeStudents = data.filter(student => student.isActive);
+        setRoster(activeStudents);
+        setFiltered(activeStudents);
       });
   }, []);
 
@@ -40,12 +41,37 @@ function PortalAttendance() {
   };
 
   const handleSearch = () => {
-    const term = searchTerm.toLowerCase();
-    const result = roster.filter(
-      s =>
-        s.firstName.toLowerCase().includes(term) ||
-        s.lastName.toLowerCase().includes(term)
-    );
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) {
+      setFiltered(roster);
+      return;
+    }
+
+    const nameParts = term.split(/\s+/);
+
+    if (nameParts.length === 1) {
+      const partial = nameParts[0];
+      const result = roster.filter(student =>
+        student.firstName.toLowerCase().includes(partial) ||
+        student.lastName.toLowerCase().includes(partial)
+      );
+      setFiltered(result);
+      return;
+    }
+    
+    const first = nameParts[0];
+    const last = nameParts.slice(1).join(' ');
+
+    const result = roster.filter(student => {
+      const studentFirst = student.firstName.toLowerCase();
+      const studentLast = student.lastName.toLowerCase();
+
+      return (
+        (studentFirst.includes(first) && studentLast.includes(last)) ||
+        (studentFirst.includes(last) && studentLast.includes(first))
+      );
+    });
+
     setFiltered(result);
   };
 

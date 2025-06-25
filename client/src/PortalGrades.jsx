@@ -1,50 +1,78 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { handlePrint } from './printUtils.js';
 
 function PortalGrades() {
     const [name, setName] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const [studentData, setStudentData] = useState([]);
     const [editedScores, setEditedScores] = useState({});
     const [editedComments, setEditedComments] = useState({});
     const [updateStatus, setUpdateStatus] = useState({});
     const [updateCommentStatus, setUpdateCommentStatus] = useState({});
     const [roster, setRoster] = useState([]);
     const [rosterError, setRosterError] = useState('');
+    const [filteredData, setFilteredData] = useState([]);
     const [expandedStudents, setExpandedStudents] = useState(new Set());
     const [filterForm, setFilterForm] = useState('');
     const [sortBy, setSortBy] = useState('name');
     const [sortSubject, setSortSubject] = useState('');
     const [sortOrder, setSortOrder] = useState('desc');
 
-    const handleSearchStudent = async (e) => {
-        e.preventDefault();
+    const studentRefs = useRef([]);
+
+    const handleStudentPrint = (idx) => {
+        const student = filteredData[idx];
+        handlePrint(student, calculateSubjectAverage);
+    };
+
+    const handleSearchStudent = (e) => {
+        if (e) {
+            e.preventDefault();
+        }
         setLoading(true);
         setError('');
 
-        try {
-            const token = sessionStorage.getItem('token');
-
-            const res = await fetch(`http://localhost:5000/search-students?name=${encodeURIComponent(name)}`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + token
-                }
-            });
-
-            const data = await res.json();
-            if (res.ok) {
-                setStudentData(data);
-                setName('');
-            } else {
-                setError(data.error || 'Cannot find matching students');
-            }
-        } catch (e) {
-            setError('Failed to search student. Please try again.');
-        } finally {
+        const term = name.trim().toLowerCase();
+        
+        if (!term) {
+            setFilteredData(roster);
             setLoading(false);
+            return;
         }
+
+        const nameParts = term.split(/\s+/);
+        let result = [];
+
+        if (nameParts.length === 1) {
+            const partial = nameParts[0];
+            result = roster.filter(student =>
+                student.firstName.toLowerCase().includes(partial) ||
+                student.lastName.toLowerCase().includes(partial)
+            );
+        } else {
+            const first = nameParts[0];
+            const last = nameParts.slice(1).join(' ');
+
+            result = roster.filter(student => {
+                const studentFirst = student.firstName.toLowerCase();
+                const studentLast = student.lastName.toLowerCase();
+
+                return (
+                    (studentFirst.includes(first) && studentLast.includes(last)) ||
+                    (studentFirst.includes(last) && studentLast.includes(first))
+                );
+            });
+        }
+
+        setFilteredData(result);
+        
+        if (result.length === 0 && term) {
+            setError('No matching students found');
+        } else {
+            setError('');
+        }
+        
+        setLoading(false);
     }
 
     const handleGetRoster = async () => {
@@ -63,7 +91,9 @@ function PortalGrades() {
 
             const data = await res.json();
             if (res.ok) {
-                setRoster(data);
+                const activeStudents = data.filter(student => student.isActive);
+                setRoster(activeStudents);
+                setFilteredData(activeStudents);
             } else {
                 setRosterError(data.error || 'Cannot retrieve roster');
             }
@@ -71,6 +101,10 @@ function PortalGrades() {
             setRosterError('Failed to retrieve roster. Reload the page to try again.');
         }
     }
+
+    useEffect(() => {
+        handleGetRoster();
+    }, []);
 
     const toggleStudentExpansion = (studentId) => {
         setExpandedStudents(prev => {
@@ -136,7 +170,7 @@ function PortalGrades() {
     };
 
     const getFilteredAndSortedRoster = () => {
-        let filtered = roster;
+        let filtered = filteredData;
         
         if (filterForm) {
             filtered = filtered.filter(student => student.form === Number(filterForm));
@@ -231,7 +265,7 @@ function PortalGrades() {
                                                                 min="0"
                                                                 max="100"
                                                                 placeholder="--"
-                                                                className="border border-gray-300 px-1 py-1 rounded-md w-20 text-center focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition duration-200"
+                                                                className="border border-gray-300 px-1 py-1 rounded-md w-20 text-center focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition duration-200 no-print"
                                                                 onChange={(e) => {
                                                                     const value = e.target.value;
                                                                     setEditedScores(prev => ({
@@ -297,8 +331,15 @@ function PortalGrades() {
                                                                                     return studentItem;
                                                                                 });
                                                                             };
-                                                                            setStudentData(updateStudentGrades);
                                                                             setRoster(updateStudentGrades);
+                                                                            setFilteredData(prev => updateStudentGrades(prev));
+
+                                                                            // Clear the edited score since it's now saved
+                                                                            setEditedScores(prev => {
+                                                                                const updated = { ...prev };
+                                                                                delete updated[key];
+                                                                                return updated;
+                                                                            });
                                                                             
                                                                             // Clear success message after 3 seconds
                                                                             setTimeout(() => {
@@ -350,7 +391,7 @@ function PortalGrades() {
                                 {/* Comments Section */}
                                 <div className="border-t border-gray-200 pt-4">
                                     <h5 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
-                                        <svg className="w-4 h-4 mr-1 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg className="w-4 h-4 mr-1 text-gray-600 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                                         </svg>
                                         Teacher Comment
@@ -360,7 +401,7 @@ function PortalGrades() {
                                             rows="2"
                                             placeholder={"Add a comment for this student..."}
                                             defaultValue={existingComment}
-                                            className="w-full px-3 py-2 border-0 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition duration-200 placeholder-gray-400"
+                                            className="w-full px-3 py-2 border-0 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition duration-200 placeholder-gray-400 no-print"
                                             onChange={(e) => {
                                                 setEditedComments(prev => ({
                                                     ...prev,
@@ -461,10 +502,6 @@ function PortalGrades() {
     const filteredRoster = getFilteredAndSortedRoster();
 
     useEffect(() => {
-        handleGetRoster();
-    }, []);
-
-    useEffect(() => {
         if (sortBy !== 'subjectGrades') {
             setSortSubject('');
             setSortOrder('desc');
@@ -504,23 +541,6 @@ function PortalGrades() {
                         {loading ? 'Searching Student...' : 'Search Student'}
                     </button>
                 </form>
-                {studentData.length > 0 && (
-                    <div className="mt-6 space-y-4">
-                        {studentData.map((student, studentIdx) => (
-                            <div key={studentIdx} className="border rounded-lg shadow-sm p-4">
-                                <div className="flex flex-col md:flex-row md:justify-between md:items-center md:gap-4">
-                                    <p className="font-semibold text-lg">{student.firstName} {student.lastName}</p>
-                                    <div className="flex flex-col md:flex-row md:gap-8">
-                                        <p className="text-sm text-gray-600">Form: {student.form}</p>
-                                        <p className="text-sm text-gray-600">Date of Birth: {new Date(student.dateOfBirth).toLocaleDateString()}</p>
-                                        <p className="text-sm text-gray-600">Sex: {student.gender}</p>
-                                    </div>
-                                </div>
-                                {renderStudentGradesAndComment(student)}
-                            </div>
-                        ))}
-                    </div>
-                )}
             </div>
             {/* Roster */}
             <div className="bg-white rounded-lg shadow-lg p-6">
@@ -577,7 +597,7 @@ function PortalGrades() {
                 {filteredRoster.length > 0 && (
                     <div className="space-y-3">
                         {filteredRoster.map((student, studentIdx) => (
-                            <div key={studentIdx} className="border rounded-lg shadow-sm">
+                            <div key={studentIdx} ref={el => studentRefs.current[studentIdx] = el} className="border rounded-lg shadow-sm">
                                 {/* Student Basic Info */}
                                 <div 
                                     className="p-4 cursor-pointer hover:bg-gray-50 hover:rounded-lg"
@@ -592,7 +612,7 @@ function PortalGrades() {
                                                 <span>DOB: {new Date(student.dateOfBirth).toLocaleDateString()}</span>
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-2 no-print">
                                             <span className="text-sm text-gray-500">
                                                 {expandedStudents.has(student.admissionNum) ? 'Hide' : 'Show'} Grades
                                             </span>
@@ -609,9 +629,15 @@ function PortalGrades() {
                                 </div>
                                 {/* Student Grades And Comment */}
                                 {expandedStudents.has(student.admissionNum) && (
-                                    <div className="px-4 pb-4">
-                                        {renderStudentGradesAndComment(student)}
-                                    </div>
+                                    <>
+                                        <div className="px-4">
+                                            {renderStudentGradesAndComment(student)}
+                                        </div>
+                                        <button
+                                            className="ml-auto block my-4 mr-4 px-4 py-2 bg-blue-500 hover:bg-blue-700 text-white font-medium rounded-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                                            onClick={() => handleStudentPrint(studentIdx)}
+                                        >Print Report</button>
+                                    </>
                                 )}
                             </div>
                         ))}
