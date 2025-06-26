@@ -23,8 +23,9 @@ function PortalAttendance() {
     })
       .then(res => res.json())
       .then(data => {
-        setRoster(data);
-        setFiltered(data);
+        const activeStudents = data.filter(student => student.isActive);
+        setRoster(activeStudents);
+        setFiltered(activeStudents);
       })
       .catch(err => console.error('Error fetching students:', err));
   }, []);
@@ -172,7 +173,7 @@ function PortalAttendance() {
         {displayRoster.map((student, idx) => (
           <div key={idx} className="border rounded-lg shadow-sm mb-4">
             <div
-              className="p-4 cursor-pointer hover:bg-gray-50"
+              className="p-4 cursor-pointer hover:bg-gray-50 hover:rounded-lg"
               onClick={() => toggleStudentExpansion(student.admissionNum)}
             >
               <div className="flex items-center justify-between">

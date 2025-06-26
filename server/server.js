@@ -17,6 +17,7 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization']
 };
 app.use(cors(corsOptions));
+
 app.use(express.static(path.join(__dirname, '../public')));
 
 app.use(express.json());
@@ -31,6 +32,7 @@ cron.schedule('0 0 * * *', async () => {
     console.error('Error resetting attendance:', error);
   }
 });
+
 app.listen(port, () => {
     console.log("Server running on port " + port);
 });
