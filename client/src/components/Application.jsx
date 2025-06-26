@@ -12,13 +12,28 @@ function Application() {
     const [gOccupation, setGOccupation] = useState('');
     const [address, setAddress] = useState('');
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        const admissionInfo = { 
-            firstName, lastName, DOB, sex, religion, gFirstName, gLastName, gNumber, gOccupation, address 
+        const admissionInfo = {
+          firstName, lastName, DOB, sex, religion,
+          gFirstName, gLastName, gNumber, gOccupation, address
+        };
+      
+        try {
+          const res = await fetch('http://localhost:5000/submit-application', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(admissionInfo),
+          });
+      
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error);
+          alert("Application submitted successfully!");
+        } catch (err) {
+          console.error(err);
+          alert("Failed to submit application.");
         }
-        console.log(admissionInfo);
-    }
+      };
 
     return (
         <section className="min-h-screen bg-gray-50 py-15 px-4">

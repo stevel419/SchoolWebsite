@@ -74,6 +74,14 @@ const Footer = () => {
                                     Admissions
                                 </Link>
                             </div>
+                            <div>
+                                <Link
+                                    to="/update-website"
+                                    className="text-white hover:underline hover:text-emerald-400 transition"
+                                    >
+                                    Update Website
+                                </Link>
+                            </div>
                         </div>
                     </div>
                 </div>

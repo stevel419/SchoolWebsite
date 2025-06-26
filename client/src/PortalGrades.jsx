@@ -610,6 +610,7 @@ function PortalGrades() {
                                                 <span>Form: {student.form}</span>
                                                 <span>Sex: {student.gender}</span>
                                                 <span>DOB: {new Date(student.dateOfBirth).toLocaleDateString()}</span>
+                                                <span>Days Missed: {student.daysMissed || 0}</span> {/* Added this */}
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-2 no-print">

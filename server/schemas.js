@@ -38,50 +38,54 @@ const studentSchema = new mongoose.Schema({
     admissionNum: {
         type: String,
         required: true,
-        unique: true
+        unique: true,
     },
     firstName: {
         type: String,
         required: true,
-        trim: true
+        trim: true,
     },
     lastName: {
         type: String,
         required: true,
-        trim: true
+        trim: true,
     },
     dateOfBirth: {
         type: Date,
-        required: true
+        required: true,
     },
     gender: {
         type: String,
         enum: ['Male', 'Female'],
-        required: true
+        required: true,
     },
     religion: {
         type: String,
-        trim: true
+        trim: true,
     },
     guardian: {
         name: String,
         phone: String,
-        occupation: String
+        occupation: String,
     },
     address: {
         type: String,
-        required: true
+        required: true,
     },
     form: {
         type: Number,
         required: true,
         min: 1,
-        max: 6
+        max: 6,
     },
     subjects: [{
         type: String,
-        required: true
+        required: true,
     }],
+    daysMissed: {
+        type: Number,
+        default: 0,  
+    },
     isActive: {
         type: Boolean,
         default: true,
