@@ -1,17 +1,6 @@
 import printStylesCSS from './printStyles.css?inline';
 
 // Utility functions for print functionality
-export const calculateAge = (dateOfBirth) => {
-    const today = new Date();
-    const birthDate = new Date(dateOfBirth);
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-        age--;
-    }
-    return age;
-};
-
 export const getScoreClass = (score) => {
     if (score >= 75) return 'print-score-high';
     if (score >= 50) return 'print-score-medium';
@@ -46,20 +35,12 @@ export const generatePrintContent = (student, calculateSubjectAverage) => {
             <div class="print-student-name">${student.firstName} ${student.lastName}</div>
             <div class="print-student-details">
                 <div class="print-detail-item">
-                    <div class="print-detail-label">Admission Number</div>
-                    <div class="print-detail-value">${student.admissionNum || 'N/A'}</div>
-                </div>
-                <div class="print-detail-item">
                     <div class="print-detail-label">Form</div>
                     <div class="print-detail-value">${student.form}</div>
                 </div>
                 <div class="print-detail-item">
                     <div class="print-detail-label">Gender</div>
                     <div class="print-detail-value">${student.gender}</div>
-                </div>
-                <div class="print-detail-item">
-                    <div class="print-detail-label">Age</div>
-                    <div class="print-detail-value">${calculateAge(student.dateOfBirth)} years</div>
                 </div>
                 <div class="print-detail-item">
                     <div class="print-detail-label">Date of Birth</div>
@@ -105,7 +86,7 @@ export const generatePrintContent = (student, calculateSubjectAverage) => {
                                     ${subject}
                                 </div>
                                 <div class="print-overall-grade ${getGradeClass(overall.letterGrade)}">
-                                    ${overall.average.toFixed(1)}% (${overall.letterGrade})
+                                    Overall: ${overall.average.toFixed(1)}% (${overall.letterGrade})
                                 </div>
                             </div>
                             

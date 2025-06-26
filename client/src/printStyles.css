@@ -141,11 +141,17 @@
     font-size: 16px;
     font-weight: bold;
     background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
-    color: white;
     padding: 8px 16px;
     border-radius: 20px;
     box-shadow: 0 2px 4px rgba(72, 187, 120, 0.3);
 }
+
+/* Grade color coding */
+.print-grade-a { background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); }
+.print-grade-b { background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%); }
+.print-grade-c { background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%); }
+.print-grade-d { background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%); }
+.print-grade-f { background: linear-gradient(135deg, #9f7aea 0%, #805ad5 100%); }
 
 /* Assessment Grid */
 .print-assessments-section {
@@ -260,10 +266,3 @@
         size: A4;
     }
 }
-
-/* Grade color coding */
-.print-grade-a { background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); }
-.print-grade-b { background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%); }
-.print-grade-c { background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%); }
-.print-grade-d { background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%); }
-.print-grade-f { background: linear-gradient(135deg, #9f7aea 0%, #805ad5 100%); }
