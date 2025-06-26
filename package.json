@@ -1,5 +1,8 @@
 {
   "dependencies": {
-    "multer": "^2.0.1"
+    "multer": "^2.0.1",
+    "node-cron": "^4.1.1",
+    "react-router-dom": "^7.6.2",
+    "react-router-hash-link": "^2.4.3"
   }
 }

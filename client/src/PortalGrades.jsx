@@ -514,6 +514,7 @@ function PortalGrades() {
                                         <p className="text-sm text-gray-600">Form: {student.form}</p>
                                         <p className="text-sm text-gray-600">Date of Birth: {new Date(student.dateOfBirth).toLocaleDateString()}</p>
                                         <p className="text-sm text-gray-600">Sex: {student.gender}</p>
+                                        <p className="text-sm text-gray-600">Days Missed: {student.daysMissed || 0}</p> {/* Added this */}
                                     </div>
                                 </div>
                                 {renderStudentGradesAndComment(student)}
@@ -590,6 +591,7 @@ function PortalGrades() {
                                                 <span>Form: {student.form}</span>
                                                 <span>Sex: {student.gender}</span>
                                                 <span>DOB: {new Date(student.dateOfBirth).toLocaleDateString()}</span>
+                                                <span>Days Missed: {student.daysMissed || 0}</span> {/* Added this */}
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-2">

@@ -34,57 +34,66 @@ const teacherSchema = new mongoose.Schema({
     timestamps: true
 });
 
-const studentSchema = new mongoose.Schema({
-    admissionNum: {
+const studentSchema = new mongoose.Schema(
+    {
+      admissionNum: {
         type: String,
         required: true,
-        unique: true
-    },
-    firstName: {
+        unique: true,
+      },
+      firstName: {
         type: String,
         required: true,
-        trim: true
-    },
-    lastName: {
+        trim: true,
+      },
+      lastName: {
         type: String,
         required: true,
-        trim: true
-    },
-    dateOfBirth: {
+        trim: true,
+      },
+      dateOfBirth: {
         type: Date,
-        required: true
-    },
-    gender: {
+        required: true,
+      },
+      gender: {
         type: String,
         enum: ['Male', 'Female'],
-        required: true
-    },
-    religion: {
+        required: true,
+      },
+      religion: {
         type: String,
-        trim: true
-    },
-    guardian: {
+        trim: true,
+      },
+      guardian: {
         name: String,
         phone: String,
-        occupation: String
-    },
-    address: {
+        occupation: String,
+      },
+      address: {
         type: String,
-        required: true
-    },
-    form: {
+        required: true,
+      },
+      form: {
         type: Number,
         required: true,
         min: 1,
-        max: 6
+        max: 6,
+      },
+      subjects: [
+        {
+          type: String,
+          required: true,
+        },
+      ],
+      daysMissed: {
+        type: Number,
+        default: 0,  
+      },
     },
-    subjects: [{
-        type: String,
-        required: true
-    }]
-}, {
-    timestamps: true
-});
+    {
+      timestamps: true,
+    }
+  );
 
 const gradeSchema = new mongoose.Schema({
     student: {
