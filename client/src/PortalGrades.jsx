@@ -241,8 +241,11 @@ function PortalGrades() {
                                 <div className="mb-4">
                                     <h4 className="text-lg font-semibold text-gray-800 mb-3 flex items-center justify-between">
                                         <span className="flex items-center">
-                                            <span className="w-3 h-3 bg-emerald-500 rounded-full mr-2"></span>
+                                            <span className="w-3 h-3 bg-emerald-500 rounded-full"></span>
                                             {s}
+                                                <span className="text-sm text-gray-600 font-normal ml-6">
+                                                Classes Missed: {student.classesMissed?.[s] ?? 0}
+                                                </span>
                                         </span>
                                         <span className="text-base px-2 py-1 rounded">
                                             Overall: {overall.average.toFixed(1)}% ({overall.letterGrade})

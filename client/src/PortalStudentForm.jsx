@@ -56,7 +56,7 @@ const PortalStudentForm = ({ mode = 'add', student = {} }) => {
             };
             const token = sessionStorage.getItem('token');
 
-            const res = await fetch('http://localhost:#000/save-student', {
+            const res = await fetch('http://localhost:3000/save-student', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

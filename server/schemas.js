@@ -90,7 +90,12 @@ const studentSchema = new mongoose.Schema({
         type: Boolean,
         default: true,
         required: true
-    }
+    },
+    classesMissed: {
+        type: Map,
+        of: Number,
+        default: {}
+      },
 }, {
     timestamps: true
 });
@@ -150,7 +155,11 @@ const attendanceSchema = new mongoose.Schema({
     subject: {
         type: String,
         required: true
-    }
+    },
+    finalized: {
+        type: Boolean,
+        default: false
+      }
 });
 
 const commentSchema = new mongoose.Schema({

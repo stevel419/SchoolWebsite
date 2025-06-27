@@ -52,6 +52,20 @@ function PortalAttendance() {
     }
   };
 
+  const [alreadyFinalized, setAlreadyFinalized] = useState(false);
+
+  useEffect(() => {
+    if (!token) return;
+    fetch('http://localhost:3000/attendance-finalized-status', {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(res => res.json())
+      .then(data => setAlreadyFinalized(data.finalized))
+      .catch(err => console.error('Error checking attendance status:', err));
+    }, 
+  []);
+
+
   const handleAttendanceChange = (admissionNum, subject, status) => {
     setPendingAttendance(prev => {
       const withoutCurrent = prev.filter(
@@ -228,16 +242,18 @@ function PortalAttendance() {
           </div>
         ))}
 
-        {/* ✅ Finalize Attendance */}
+        {/* Finalize Attendance */}
         <div className="mt-8 flex justify-end">
           <button
             onClick={handleFinalizeAttendance}
-            disabled={!allSelected}
+            disabled={!allSelected || alreadyFinalized}
             className={`px-6 py-3 font-medium rounded-md transition ${
-              allSelected ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-gray-400 cursor-not-allowed text-white'
+              !allSelected || alreadyFinalized
+                ? 'bg-gray-400 cursor-not-allowed text-white'
+                : 'bg-emerald-600 hover:bg-emerald-700 text-white'
             }`}
           >
-            Finalize Attendance
+            {alreadyFinalized ? 'Attendance Already Finalized' : 'Finalize Attendance'}
           </button>
         </div>
       </div>

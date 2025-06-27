@@ -97,8 +97,14 @@ router.get('/get-students', authenticateJWT, async (req, res) => {
                     Comment.find(filters)
                 ]);
 
+                const studentObj = student.toObject();
+
+                if (!studentObj.classesMissed) {
+                    studentObj.classesMissed = {};
+                }
+
                 return {
-                    ...student.toObject(),
+                    ...studentObj,
                     grades,
                     attendance,
                     comments
@@ -373,69 +379,71 @@ router.post('/update-grade', authenticateJWT, async (req, res) => {
         res.status(500).json({ error: "Failed to update student grade" });
     }
 });
-
 router.post('/update-attendance', authenticateJWT, async (req, res) => {
-    try {
-      const isAdmin = req.user.isAdmin;
-      const teacherId = req.user.teacherId;
-      const { admissionNum, attended, subject } = req.body;
-  
-      const today = new Date();
-      today.setHours(0, 0, 0, 0); 
-  
-      const student = await Student.findOne({ admissionNum });
-      if (!student) {
-        return res.status(400).json({ error: "Student is not in database" });
-      }
-  
-      // Find existing attendance for *this student, this subject and this date*
-      let attendanceQuery = { student: student._id, subject, date: today };
-      if (!isAdmin) attendanceQuery.teacher = teacherId;
-  
-      let attendance = await Attendance.findOne(attendanceQuery);
-  
-      // If no record exists, create it
-      if (!attendance) {
-        const teacher = isAdmin
-          ? await Teacher.findOne({ subject })
-          : await Teacher.findById(teacherId);
-  
-        if (!teacher) return res.status(400).json({ error: "Teacher not found" });
-  
-        attendance = new Attendance({
-          student: student._id,
-          teacher: teacher._id,
-          subject,
-          attended,
-          date: today
-        });
-  
-        await attendance.save();
-  
-        if (!attended) {
-          student.daysMissed += 1;
-          await student.save();
-        }
-  
-        return res.status(200).json({ message: "Attendance created successfully", attendance });
-      }
-  
-      const wasAttendedBefore = attendance.attended;
-      attendance.attended = attended;
-      await attendance.save();
-  
-      if (wasAttendedBefore === true && attended === false) {
-        student.daysMissed += 1;
-        await student.save();
-      }
-  
-      res.status(200).json({ message: "Attendance updated successfully", attendance });
-  
-    } catch (e) {
-      console.error(e);
-      res.status(500).json({ error: "Failed to update student attendance" });
+  try {
+    const isAdmin = req.user.isAdmin;
+    const teacherId = req.user.teacherId;
+    const { admissionNum, attended, subject } = req.body;
+
+    const student = await Student.findOne({ admissionNum });
+    if (!student) {
+      return res.status(400).json({ error: "Student not found in database" });
     }
-  });
+
+    const attendanceQuery = {
+      student: student._id,
+      subject
+    };
+    if (!isAdmin) {
+      attendanceQuery.teacher = teacherId;
+    }
+
+    let attendance = await Attendance.findOne(attendanceQuery);
+    let resolvedTeacherId = teacherId;
+
+    if (!attendance) {
+      if (isAdmin) {
+        const existingToday = await Attendance.findOne({
+          student: student._id,
+          subject,
+          date: {
+            $gte: new Date(new Date().setHours(0, 0, 0, 0)),
+            $lte: new Date(new Date().setHours(23, 59, 59, 999))
+          }
+        });
+        resolvedTeacherId = existingToday?.teacher || (await Teacher.findOne({ subject }))?._id;
+
+        if (!resolvedTeacherId) {
+          return res.status(400).json({ error: "No teacher found for subject" });
+        }
+      }
+
+      attendance = new Attendance({
+        student: student._id,
+        teacher: resolvedTeacherId,
+        subject,
+        attended,
+        date: new Date(),
+        finalized: false
+      });
+    } else {
+      attendance.attended = attended;
+      attendance.finalized = false;
+    }
+
+    await attendance.save();
+    res.status(200).json({ message: "Attendance draft saved", attendance });
+
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Failed to update attendance" });
+  }
+});
+
+
+
+
+
   
 router.post('/update-comment', authenticateJWT, async (req, res) => {
     try {
@@ -694,30 +702,129 @@ router.post('/check-password', (req, res) => {
 });
   
 router.post('/finalize-attendance', authenticateJWT, async (req, res) => {
-    try {
-      const { records } = req.body;
-      if (!Array.isArray(records)) return res.status(400).json({ error: "No records provided" });
-  
-      for (const { admissionNum, subject, attended } of records) {
-        const student = await Student.findOne({ admissionNum });
-        if (!student) continue;
-  
-        // Save daily attendance
-        const teacher = await Teacher.findOne({ subject }) || null;
-        await new Attendance({ student: student._id, teacher: teacher?._id, subject, attended, date: new Date() }).save();
-  
-        // Increment daysMissed if absent
-        if (!attended) {
-          student.daysMissed += 1;
-          await student.save();
-        }
+  try {
+    const teacherId = req.user.teacherId;
+    const isAdmin = req.user.isAdmin;
+    const { records } = req.body;
+
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+
+    // Prevent duplicate finalization for teachers
+    if (!isAdmin) {
+      const alreadyFinalized = await Attendance.findOne({
+        teacher: teacherId,
+        date: { $gte: todayStart, $lte: todayEnd },
+        finalized: true
+      });
+
+      if (alreadyFinalized) {
+        return res.status(400).json({ error: "Attendance already finalized for today" });
       }
-  
-      return res.status(200).json({ message: 'Attendance finalized successfully' });
-    } catch (e) {
-      console.error(e);
-      return res.status(500).json({ error: 'Error finalizing attendance' });
     }
+
+    const missedSubjectMap = new Map(); // studentId -> { subject: true }
+
+    for (const record of records) {
+      const { admissionNum, subject, attended } = record;
+      const student = await Student.findOne({ admissionNum });
+      if (!student) continue;
+
+      const attendanceQuery = {
+        student: student._id,
+        subject
+      };
+
+      let attendance = await Attendance.findOne(attendanceQuery);
+      let usedTeacherId = teacherId;
+
+      // Determine teacher if missing or admin
+      if (!attendance) {
+        if (isAdmin) {
+          const fallbackTeacher = await Teacher.findOne({ subject });
+          if (!fallbackTeacher) continue;
+          usedTeacherId = fallbackTeacher._id;
+        }
+
+        attendance = new Attendance({
+          student: student._id,
+          teacher: usedTeacherId,
+          subject,
+          date: new Date(),
+          attended
+        });
+      } else {
+        attendance.attended = attended;
+      }
+
+      attendance.finalized = true;
+      await attendance.save();
+
+      // Track subjects missed
+      if (!attended) {
+        const missed = missedSubjectMap.get(student._id.toString()) || {};
+        missed[subject] = true;
+        missedSubjectMap.set(student._id.toString(), missed);
+      }
+    }
+
+    // Process missed updates per student
+    for (const [studentId, missedSubjects] of missedSubjectMap.entries()) {
+      const student = await Student.findById(studentId);
+      if (!student) continue;
+
+      if (!student.classesMissed || typeof student.classesMissed !== 'object') {
+        student.classesMissed = {};
+      }
+
+      for (const subject of Object.keys(missedSubjects)) {
+        student.classesMissed[subject] = (student.classesMissed[subject] || 0) + 1;
+      }
+
+      // Check if student missed all subjects today
+      const todaysAttendance = await Attendance.find({
+        student: student._id,
+        date: { $gte: todayStart, $lte: todayEnd },
+        finalized: true
+      });
+
+      const missedAll = todaysAttendance.length > 0 && todaysAttendance.every(a => a.attended === false);
+      if (missedAll) {
+        student.daysMissed = (student.daysMissed || 0) + 1;
+      }
+
+      await student.save();
+    }
+
+    res.status(200).json({ message: "Attendance finalized and saved." });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to finalize attendance" });
+  }
 });
+
+
+
+router.get('/attendance-finalized-status', authenticateJWT, async (req, res) => {
+  try {
+    const teacherId = req.user.teacherId;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const alreadyFinalized = await Attendance.exists({
+      teacher: teacherId,
+      date: today
+    });
+
+    res.status(200).json({ finalized: !!alreadyFinalized });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to check attendance status" });
+  }
+});
+
 
 module.exports = router;
