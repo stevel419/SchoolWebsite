@@ -20,12 +20,20 @@ import UpdateWebsite from './components/UpdateWebsite.jsx';
 function App() {
   const location = useLocation();
 
+  const noLayoutRoutes = [
+    "/PortalLogin",
+    "/PortalSignup",
+    "/PortalSignupGate"
+  ];
+
+  const isNoLayout = noLayoutRoutes.includes(location.pathname);
+
   const isPortalRoute = location.pathname.startsWith("/Portal") || 
   ["/PortalStudentRecords", "/PortalGrades", "/PortalAttendance"].includes(location.pathname);
 
   return (
       <div>
-        {isPortalRoute ? <PortalHeader /> : <Header />}
+        {!isNoLayout && (isPortalRoute ? <PortalHeader /> : <Header />)}
         <main>
           <Routes>
             <Route path="/" element={<Home />} />
@@ -44,7 +52,7 @@ function App() {
             <Route path="/update-website" element={<UpdateWebsite />} />
             </Routes>
         </main>
-        {!isPortalRoute && <Footer />}
+        {!isNoLayout && !isPortalRoute && <Footer />}
       </div>
   );
 }

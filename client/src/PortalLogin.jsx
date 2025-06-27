@@ -46,7 +46,7 @@ function PortalLogin() {
     }
 
     return (
-        <section className="min-h-screen pt-20 px-8 bg-gray-100 flex items-center justify-center">
+        <section className="min-h-screen px-8 bg-gray-100 flex items-center justify-center">
             <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md space-y-6">
                 <h2 className="text-2xl font-bold text-center text-emerald-700">Teacher Login</h2>
 
