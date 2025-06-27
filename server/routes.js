@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const router = express.Router();
 const { Teacher, Student, Grade, Attendance, Comment } = require('./schemas.js');
 const authenticateJWT = require('./middleware/authMiddleware.js');
+const s3 = require('./config/s3Client.js');
 
 router.post('/create-user', async (req, res) => {
     try {

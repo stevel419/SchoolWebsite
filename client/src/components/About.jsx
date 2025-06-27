@@ -49,7 +49,7 @@ function About() {
             </section>
             <div className="flex justify-center pb-5">
                 <Link to="/" className="text-lg font-bold uppercase border-2 border-emerald-700 text-emerald-700 px-4 py-2 hover:underline hover:text-white hover:bg-emerald-700">
-                    Back to home →
+                    ← Back to home
                 </Link>
             </div>
             <Staff />

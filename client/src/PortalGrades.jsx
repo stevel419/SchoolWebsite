@@ -124,15 +124,30 @@ function PortalGrades() {
             return { average: 0, letterGrade: 'N/A', hasGrades: false };
         }
         
-        const assessments = gradeForSubject.assessments || [];
-        const validScores = assessments.filter(a => a.score !== null && a.score !== undefined);
-        
-        if (validScores.length === 0) {
+        const assessments = gradeForSubject.assessments;
+
+        const weights = {
+            "Midterm 1" : 0.2,
+            "Midterm 2" : 0.2,
+            "Endterm" : 0.3,
+            "Final" : 0.3
+        };
+
+        let total = 0;
+        let weightSum = 0;
+        for (const a of assessments) {
+            const weight = weights[a.name];
+            if (weight && a.score != null && a.score !== undefined) {
+                total += a.score * weight;
+                weightSum += weight;
+            }
+        }
+
+        if (weightSum === 0) {
             return { average: 0, letterGrade: 'N/A', hasGrades: false };
         }
-        
-        const sum = validScores.reduce((acc, assessment) => acc + assessment.score, 0);
-        const average = sum / validScores.length;
+
+        const average = total / weightSum;
         
         let letterGrade;
         if (student.form >= 5) {

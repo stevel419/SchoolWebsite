@@ -84,6 +84,16 @@ function PortalLogin() {
                         </div>
                     </div>
 
+                    {error && (
+                        <div className="bg-red-50 border border-red-200 rounded-md p-3">
+                            <p className="text-red-600 text-sm">{error}</p>
+                        </div>
+                    )}
+                    {success && (
+                        <div className="bg-green-50 border border-green-200 rounded-md p-3">
+                            <p className="text-green-600 text-sm">{success}</p>
+                        </div>
+                    )}
                     <div className="flex justify-between items-center">
                         <Link
                         to="/PortalSignupGate"
@@ -98,16 +108,11 @@ function PortalLogin() {
                             Login
                         </button>
                     </div>
-                    {error && (
-                        <div className="bg-red-50 border border-red-200 rounded-md p-3">
-                            <p className="text-red-600 text-sm">{error}</p>
-                        </div>
-                    )}
-                    {success && (
-                        <div className="bg-green-50 border border-green-200 rounded-md p-3">
-                            <p className="text-green-600 text-sm">{success}</p>
-                        </div>
-                    )}
+                    <div className="flex justify-center items-center">
+                        <Link to="/" className="uppercase font-bold text-emerald-600 hover:underline hover:text-emerald-700">
+                            ← Back to home
+                        </Link>
+                    </div>
                 </div>
             </div>
         </section>
