@@ -468,6 +468,45 @@ router.post('/update-comment', authenticateJWT, async (req, res) => {
     }
 });
 
+router.delete('/delete-student/:admissionNum', authenticateJWT, async (req, res) => {
+    const session = await Student.startSession();
+    session.startTransaction();
+
+    try {
+        const isAdmin = req.user.isAdmin;
+        if (!isAdmin) {
+            return res.status(403).json({ error: "Only admin can delete a student" });
+        }
+
+        const { admissionNum } = req.params;
+        const student = await Student.findOne({ admissionNum }).session(session);
+
+        if (!student) {
+            await session.abortTransaction();
+            return res.status(404).json({ error: "Student is not in database" });
+        }
+
+        const studentId = student._id;
+
+        // Delete all associated records
+        await Promise.all([
+            Grade.deleteMany({ student: studentId }).session(session),
+            Comment.deleteMany({ student: studentId }).session(session),
+            Attendance.deleteMany({ student: studentId }).session(session),
+            Student.deleteOne({ _id: studentId }).session(session),
+        ]);
+
+        await session.commitTransaction();
+        return res.status(200).json({ message: "Student and associated records deleted successfully" });
+    } catch (e) {
+        await session.abortTransaction();
+        console.error(e);
+        return res.status(500).json({ error: e.message || "Failed to delete student" });
+    } finally {
+        session.endSession();
+    }
+});
+
 const PDFDocument = require('pdfkit');
 const nodemailer = require('nodemailer');
 const { Readable } = require('stream');

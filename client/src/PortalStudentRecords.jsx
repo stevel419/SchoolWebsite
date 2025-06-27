@@ -15,6 +15,11 @@ function PortalStudentRecords() {
         );
     };
 
+    const removeStudentFromList = (deletedAdmissionNum) => {
+        setStudentData(prev => prev.filter(student => student.admissionNum !== deletedAdmissionNum));
+        setExpandedStudentIds(prev => prev.filter(id => id !== deletedAdmissionNum));
+    };
+
     const handleSearchStudent = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -99,7 +104,11 @@ function PortalStudentRecords() {
 
                                     {isOpen && (
                                         <div className="mt-4 border-t pt-4">
-                                            <StudentForm mode="edit" student={student} />
+                                            <StudentForm 
+                                                mode="edit" 
+                                                student={student}
+                                                onDeleteSuccess={() => removeStudentFromList(student.admissionNum)}
+                                            />
                                         </div>
                                     )}
                                 </div>

@@ -615,7 +615,7 @@ function PortalGrades() {
                                         </div>
                                         <div className="flex items-center gap-2 no-print">
                                             <span className="text-sm text-gray-500">
-                                                {expandedStudents.has(student.admissionNum) ? 'Hide' : 'Show'} Grades
+                                                {expandedStudents.has(student.admissionNum) ? 'Hide' : 'View'}
                                             </span>
                                             <svg 
                                                 className={`w-5 h-5 transition-transform ${expandedStudents.has(student.admissionNum) ? 'rotate-180' : ''}`}

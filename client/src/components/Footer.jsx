@@ -75,10 +75,7 @@ const Footer = () => {
                                 </Link>
                             </div>
                             <div>
-                                <Link
-                                    to="/update-website"
-                                    className="text-white hover:underline hover:text-emerald-400 transition"
-                                    >
+                                <Link to="/update-website" className="hover:text-white transition-colors duration-200 block py-1">
                                     Update Website
                                 </Link>
                             </div>
