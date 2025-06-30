@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import RenderStudentGradesAndComments from './RenderGradesAndComments.jsx';
-import { handlePrint } from './printUtils.js';
+import { handlePrint, generatePrintContent } from './printUtils.js';
 
 function PortalGrades() {
     const [name, setName] = useState('');
@@ -18,6 +18,49 @@ function PortalGrades() {
     const [sortBy, setSortBy] = useState('name');
     const [sortSubject, setSortSubject] = useState('');
     const [sortOrder, setSortOrder] = useState('desc');
+    const [isAdmin, setIsAdmin] = useState(false);
+    const token = sessionStorage.getItem('token');
+
+    const handleSavePdf = async (idx) => {
+        const pdfContent = {};
+        const student = filteredData[idx];
+        const content = generatePrintContent(student, calculateSubjectAverage);
+        pdfContent[student.firstName + "-" + student.lastName + "-" + student.form] = content;
+
+        const token = sessionStorage.getItem('token');
+
+        const res = await fetch ('', {
+            method: '',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify(pdfContent)
+        });
+
+        const data = await res.json();
+    };
+
+    const handleSaveAllPdf = async () => {
+        const pdfContent = {};
+        for (const student in roster) {
+            const content = generatePrintContent(student, calculateSubjectAverage);
+            pdfContent[student.firstName + "-" + student.lastName + "-" + student.form] = content;
+        }
+
+        const token = sessionStorage.getItem('token');
+
+        const res = await fetch ('', {
+            method: '',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify(pdfContent)
+        });
+
+        const data = await res.json();
+    };
 
     const studentRefs = useRef([]);
 
@@ -105,6 +148,10 @@ function PortalGrades() {
 
     useEffect(() => {
         handleGetRoster();
+
+        if (!token) return;
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        setIsAdmin(payload.isAdmin || false);
     }, []);
 
     const toggleStudentExpansion = (studentId) => {
@@ -366,10 +413,10 @@ function PortalGrades() {
                                                 setFilteredData={setFilteredData}
                                             />
                                         </div>
-                                        <button
+                                        {isAdmin && (<button
                                             className="ml-auto block my-4 mr-4 px-4 py-2 bg-gray-500 hover:bg-gray-700 text-white font-medium rounded-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-                                        
-                                        >Save Report</button>
+                                            onClick={() => handleSavePdf(studentIdx)}
+                                        >Save Report</button>)}
                                         <button
                                             className="ml-auto block my-4 mr-4 px-4 py-2 bg-blue-500 hover:bg-blue-700 text-white font-medium rounded-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                                             onClick={() => handleStudentPrint(studentIdx)}
@@ -384,6 +431,15 @@ function PortalGrades() {
                 {rosterError && (
                     <div className="bg-red-50 border border-red-200 rounded-md p-3">
                         <p className="text-red-600 text-sm">{rosterError}</p>
+                    </div>
+                )}
+
+                {!rosterError && isAdmin && (
+                    <div>
+                        <button
+                            className=""
+                            onClick={() => handleSaveAllPdf()}
+                        >Save All Reports</button>
                     </div>
                 )}
             </div>

@@ -19,6 +19,18 @@ export const getGradeClass = (grade) => {
 
 export const generatePrintContent = (student, calculateSubjectAverage) => {
     return `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Student Report - ${student.firstName} ${student.lastName}</title>
+            <meta charset="utf-8">
+            <style>
+                ${printStylesCSS}
+            </style>
+        </head>
+        <body class="print-styles">
+        <div class="print-page">
+
         <!-- Header -->
         <div class="print-report-header">
             <div class="print-school-name">Kiguruyembe Secondary School</div>
@@ -124,6 +136,10 @@ export const generatePrintContent = (student, calculateSubjectAverage) => {
             <p>This report was generated automatically by the Kiguruyembe Secondary School Student Management System</p>
             <div class="print-confidential">CONFIDENTIAL DOCUMENT</div>
         </div>
+
+        </div>
+        </body>
+        </html>
     `;
 };
 
@@ -134,23 +150,7 @@ export const handlePrint = (student, calculateSubjectAverage) => {
     
     const printContent = generatePrintContent(student, calculateSubjectAverage);
     
-    printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Student Report - ${student.firstName} ${student.lastName}</title>
-            <meta charset="utf-8">
-            <style>
-                ${printStylesCSS}
-            </style>
-        </head>
-        <body class="print-styles">
-            <div class="print-page">
-                ${printContent}
-            </div>
-        </body>
-        </html>
-    `);
+    printWindow.document.write(printContent);
     printWindow.document.close();
     printWindow.focus();
     printWindow.print();
