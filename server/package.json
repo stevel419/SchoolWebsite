@@ -23,8 +23,12 @@
     "multer": "^2.0.1",
     "node-cron": "^4.1.1",
     "nodemailer": "^7.0.3",
+<<<<<<< HEAD
     "pdfkit": "^0.17.1",
     "react-router-dom": "^7.6.2",
     "react-router-hash-link": "^2.4.3"
+=======
+    "pdfkit": "^0.17.1"
+>>>>>>> 2ad3437d430fcf0a60d693d72d511d041099237b
   }
 }
