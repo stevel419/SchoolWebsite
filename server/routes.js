@@ -64,53 +64,53 @@ router.post('/login', async (req, res) => {
 });
 
 router.get('/get-students', authenticateJWT, async (req, res) => {
-    try {
-        const isAdmin = req.user.isAdmin;
-        const teacherId = req.user.teacherId;
+  try {
+      const isAdmin = req.user.isAdmin;
+      const teacherId = req.user.teacherId;
 
-        let students;
+      let students;
 
-        if (isAdmin) {
-            students = await Student.find();
-        } 
-        
-        else {
-            const teacher = await Teacher.findById(teacherId);
-            if (!teacher) {
-                return res.status(404).json({ error: "Teacher not found" });
-            }
-            const subject = teacher.subject;
+      if (isAdmin) {
+          students = await Student.find();
+      } 
+      
+      else {
+          const teacher = await Teacher.findById(teacherId);
+          if (!teacher) {
+              return res.status(404).json({ error: "Teacher not found" });
+          }
+          const subject = teacher.subject;
 
-            students = await Student.find({
-                subjects: { $in: [subject] }
-            });
-        }
+          students = await Student.find({
+              subjects: { $in: [subject] }
+          });
+      }
 
-        const fullStudents = await Promise.all(
-            students.map(async (student) => {
-                const filters = { student: student._id };
-                if (!isAdmin) filters.teacher = teacherId;
+      const fullStudents = await Promise.all(
+          students.map(async (student) => {
+              const filters = { student: student._id };
+              if (!isAdmin) filters.teacher = teacherId;
 
-                const [grades, attendance, comments] = await Promise.all([
-                    Grade.find(filters),
-                    Attendance.find(filters),
-                    Comment.find(filters)
-                ]);
+              const [grades, attendance, comments] = await Promise.all([
+                  Grade.find(filters),
+                  Attendance.find(filters),
+                  Comment.find(filters)
+              ]);
 
-                const studentObj = student.toObject();
+              const studentObj = student.toObject();
 
-                if (!studentObj.classesMissed) {
-                    studentObj.classesMissed = {};
-                }
+              if (!studentObj.classesMissed) {
+                  studentObj.classesMissed = {};
+              }
 
-                return {
-                    ...studentObj,
-                    grades,
-                    attendance,
-                    comments
-                };
-            })
-        );
+              return {
+                  ...studentObj,
+                  grades,
+                  attendance,
+                  comments
+              };
+          })
+      );
 
         res.status(200).json(fullStudents);
     } catch (e) {
@@ -476,6 +476,45 @@ router.post('/update-comment', authenticateJWT, async (req, res) => {
     }
 });
 
+router.delete('/delete-student/:admissionNum', authenticateJWT, async (req, res) => {
+    const session = await Student.startSession();
+    session.startTransaction();
+
+    try {
+        const isAdmin = req.user.isAdmin;
+        if (!isAdmin) {
+            return res.status(403).json({ error: "Only admin can delete a student" });
+        }
+
+        const { admissionNum } = req.params;
+        const student = await Student.findOne({ admissionNum }).session(session);
+
+        if (!student) {
+            await session.abortTransaction();
+            return res.status(404).json({ error: "Student is not in database" });
+        }
+
+        const studentId = student._id;
+
+        // Delete all associated records
+        await Promise.all([
+            Grade.deleteMany({ student: studentId }).session(session),
+            Comment.deleteMany({ student: studentId }).session(session),
+            Attendance.deleteMany({ student: studentId }).session(session),
+            Student.deleteOne({ _id: studentId }).session(session),
+        ]);
+
+        await session.commitTransaction();
+        return res.status(200).json({ message: "Student and associated records deleted successfully" });
+    } catch (e) {
+        await session.abortTransaction();
+        console.error(e);
+        return res.status(500).json({ error: e.message || "Failed to delete student" });
+    } finally {
+        session.endSession();
+    }
+});
+
 const PDFDocument = require('pdfkit');
 const nodemailer = require('nodemailer');
 const { Readable } = require('stream');
@@ -712,7 +751,6 @@ router.post('/finalize-attendance', authenticateJWT, async (req, res) => {
     const todayEnd = new Date();
     todayEnd.setHours(23, 59, 59, 999);
 
-    // Prevent duplicate finalization for teachers
     if (!isAdmin) {
       const alreadyFinalized = await Attendance.findOne({
         teacher: teacherId,
@@ -725,32 +763,34 @@ router.post('/finalize-attendance', authenticateJWT, async (req, res) => {
       }
     }
 
-    const missedSubjectMap = new Map(); // studentId -> { subject: true }
+    const missedSubjectMap = new Map();
 
     for (const record of records) {
       const { admissionNum, subject, attended } = record;
+
       const student = await Student.findOne({ admissionNum });
       if (!student) continue;
 
+      // Determine the teacher
+      const teacher = isAdmin
+        ? await Teacher.findOne({ subject })
+        : { _id: teacherId };
+
+      if (!teacher) continue;
+
       const attendanceQuery = {
         student: student._id,
-        subject
+        subject,
+        teacher: teacher._id,
+        date: { $gte: todayStart, $lte: todayEnd }
       };
 
       let attendance = await Attendance.findOne(attendanceQuery);
-      let usedTeacherId = teacherId;
 
-      // Determine teacher if missing or admin
       if (!attendance) {
-        if (isAdmin) {
-          const fallbackTeacher = await Teacher.findOne({ subject });
-          if (!fallbackTeacher) continue;
-          usedTeacherId = fallbackTeacher._id;
-        }
-
         attendance = new Attendance({
           student: student._id,
-          teacher: usedTeacherId,
+          teacher: teacher._id,
           subject,
           date: new Date(),
           attended
@@ -762,16 +802,14 @@ router.post('/finalize-attendance', authenticateJWT, async (req, res) => {
       attendance.finalized = true;
       await attendance.save();
 
-      // Track subjects missed
       if (!attended) {
-        const missed = missedSubjectMap.get(student._id.toString()) || {};
-        missed[subject] = true;
-        missedSubjectMap.set(student._id.toString(), missed);
+        const subjMap = missedSubjectMap.get(student._id.toString()) || {};
+        subjMap[subject] = true;
+        missedSubjectMap.set(student._id.toString(), subjMap);
       }
     }
 
-    // Process missed updates per student
-    for (const [studentId, missedSubjects] of missedSubjectMap.entries()) {
+    for (const [studentId, subjectsMissed] of missedSubjectMap.entries()) {
       const student = await Student.findById(studentId);
       if (!student) continue;
 
@@ -779,18 +817,17 @@ router.post('/finalize-attendance', authenticateJWT, async (req, res) => {
         student.classesMissed = {};
       }
 
-      for (const subject of Object.keys(missedSubjects)) {
+      for (const subject of Object.keys(subjectsMissed)) {
         student.classesMissed[subject] = (student.classesMissed[subject] || 0) + 1;
       }
 
-      // Check if student missed all subjects today
       const todaysAttendance = await Attendance.find({
         student: student._id,
         date: { $gte: todayStart, $lte: todayEnd },
         finalized: true
       });
 
-      const missedAll = todaysAttendance.length > 0 && todaysAttendance.every(a => a.attended === false);
+      const missedAll = todaysAttendance.length > 0 && todaysAttendance.every(a => !a.attended);
       if (missedAll) {
         student.daysMissed = (student.daysMissed || 0) + 1;
       }
@@ -805,6 +842,7 @@ router.post('/finalize-attendance', authenticateJWT, async (req, res) => {
     res.status(500).json({ error: "Failed to finalize attendance" });
   }
 });
+
 
 
 

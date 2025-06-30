@@ -91,11 +91,10 @@ const studentSchema = new mongoose.Schema({
         default: true,
         required: true
     },
-    classesMissed: {
-        type: Map,
-        of: Number,
-        default: {}
-      },
+    classesMissed: { 
+        type: Object, 
+        default: {} }
+
 }, {
     timestamps: true
 });

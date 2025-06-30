@@ -191,16 +191,18 @@ function PortalAttendance() {
               onClick={() => toggleStudentExpansion(student.admissionNum)}
             >
               <div className="flex items-center justify-between">
-                <div className="flex flex-col sm:flex-row sm:gap-6">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:gap-6">
                   <p className="font-semibold text-lg">{student.firstName} {student.lastName}</p>
-                  <div className="text-sm text-gray-600 sm:flex sm:gap-6">
+                  <div className="flex flex-col sm:flex-row sm:gap-6 text-sm text-gray-600">
                     <span>Form: {student.form}</span>
                     <span>Gender: {student.gender}</span>
                     <span>DOB: {new Date(student.dateOfBirth).toLocaleDateString()}</span>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-gray-500">
-                  {expanded.has(student.admissionNum) ? 'Hide' : 'Show'} Attendance
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-500">
+                    {expanded.has(student.admissionNum) ? 'Hide' : 'View'}
+                  </span>
                   <svg
                     className={`w-5 h-5 transition-transform ${expanded.has(student.admissionNum) ? 'rotate-180' : ''}`}
                     fill="none"
