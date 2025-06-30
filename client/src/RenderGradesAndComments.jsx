@@ -22,7 +22,7 @@ function RenderGradesAndComments({
 
             try {
                 const token = sessionStorage.getItem('token');
-                const res = await fetch('http://localhost:5000/update-grade', {
+                const res = await fetch('http://localhost:3000/update-grade', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -101,7 +101,7 @@ function RenderGradesAndComments({
 
             try {
                 const token = sessionStorage.getItem('token');
-                const res = await fetch('http://localhost:5000/update-comment', {
+                const res = await fetch('http://localhost:3000/update-comment', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -138,6 +138,9 @@ function RenderGradesAndComments({
 
     return (
         <div className="mt-4 border-t pt-4 space-y-6">
+            <div className="mb-3 text-sm text-gray-600">
+                <span className="font-medium">Days Missed:</span> {student.daysMissed || 0}
+            </div>
             {student.subjects && student.subjects.length > 0 ? (
                 student.subjects.map((s, idx) => {
                     const gradeForSubject = student.grades.find(g => g.subject === s);
@@ -146,12 +149,15 @@ function RenderGradesAndComments({
                     if (!gradeForSubject.assessments) {
                         return (
                             <div key={idx} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                <h4 className="text-lg font-semibold text-gray-800 mb-3">
-                                    <span className="flex items-center">
+                                <div className="mb-3">
+                                    <h4 className="text-lg font-semibold text-gray-800 flex items-center">
                                         <span className="w-3 h-3 bg-emerald-500 rounded-full mr-2"></span>
                                         {s}
-                                    </span>
-                                </h4>
+                                    </h4>
+                                    <p className="text-sm text-gray-500 ml-5">
+                                        Classes Missed: {student.classesMissed?.[s] || 0}
+                                    </p>
+                                </div>
                                 <div className="bg-white rounded-md p-3 border border-gray-200">
                                     <span className="text-gray-500 text-sm">No grades available</span>
                                 </div>

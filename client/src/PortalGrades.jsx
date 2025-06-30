@@ -125,7 +125,7 @@ function PortalGrades() {
         try {
             const token = sessionStorage.getItem('token');
 
-            const res = await fetch('http://localhost:5000/get-students', {
+            const res = await fetch('http://localhost:3000/get-students', {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -376,7 +376,6 @@ function PortalGrades() {
                                                 <span>Form: {student.form}</span>
                                                 <span>Sex: {student.gender}</span>
                                                 <span>DOB: {new Date(student.dateOfBirth).toLocaleDateString()}</span>
-                                                <span>Days Missed: {student.daysMissed || 0}</span> {/* Added this */}
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-2 no-print">

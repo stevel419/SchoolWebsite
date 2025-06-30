@@ -7,7 +7,7 @@ const path = require('path');
 const cron = require('node-cron');
 
 const app = express();
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 3000;
 
 connectDB();
 
@@ -25,12 +25,16 @@ app.use(express.json());
 app.use('/', routes);
 
 cron.schedule('0 0 * * *', async () => {
+  const start = Date.now();
+  console.log('[CRON] Starting midnight job at', new Date());
+
   try {
-    await Attendance.deleteMany({});
-    console.log('Daily attendance reset at midnight.');
-  } catch (error) {
-    console.error('Error resetting attendance:', error);
+    await yourMidnightTask(); // e.g., reset finalize flags, etc.
+  } catch (err) {
+    console.error('[CRON ERROR]', err);
   }
+
+  console.log('[CRON] Finished in', Date.now() - start, 'ms');
 });
 
 app.listen(port, () => {

@@ -28,7 +28,7 @@ function PortalStudentRecords() {
         try {
             const token = sessionStorage.getItem('token');
 
-            const res = await fetch(`http://localhost:5000/search-students?name=${encodeURIComponent(name)}`, {
+            const res = await fetch(`http://localhost:3000/search-students?name=${encodeURIComponent(name)}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',

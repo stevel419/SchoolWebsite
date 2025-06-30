@@ -18,7 +18,7 @@ function PortalAttendance() {
     setIsAdmin(payload.isAdmin || false);
     if (!payload.isAdmin && payload.subject) setTeacherSubjects([payload.subject]);
 
-    fetch('http://localhost:5000/get-students', {
+    fetch('http://localhost:3000/get-students', {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then(res => res.json())
@@ -41,7 +41,7 @@ function PortalAttendance() {
   const handleSearch = async () => {
     try {
       const res = await fetch(
-        `http://localhost:5000/search-students?name=${encodeURIComponent(searchTerm)}`,
+        `http://localhost:3000/search-students?name=${encodeURIComponent(searchTerm)}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const data = await res.json();
@@ -51,6 +51,20 @@ function PortalAttendance() {
       console.error('Error searching students:', err);
     }
   };
+
+  const [alreadyFinalized, setAlreadyFinalized] = useState(false);
+
+  useEffect(() => {
+    if (!token) return;
+    fetch('http://localhost:3000/attendance-finalized-status', {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(res => res.json())
+      .then(data => setAlreadyFinalized(data.finalized))
+      .catch(err => console.error('Error checking attendance status:', err));
+    }, 
+  []);
+
 
   const handleAttendanceChange = (admissionNum, subject, status) => {
     setPendingAttendance(prev => {
@@ -83,7 +97,7 @@ function PortalAttendance() {
 
   const handleFinalizeAttendance = async () => {
     try {
-      const res = await fetch('http://localhost:5000/finalize-attendance', {
+      const res = await fetch('http://localhost:3000/finalize-attendance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ records: pendingAttendance })
@@ -230,16 +244,18 @@ function PortalAttendance() {
           </div>
         ))}
 
-        {/* ✅ Finalize Attendance */}
+        {/* Finalize Attendance */}
         <div className="mt-8 flex justify-end">
           <button
             onClick={handleFinalizeAttendance}
-            disabled={!allSelected}
+            disabled={!allSelected || alreadyFinalized}
             className={`px-6 py-3 font-medium rounded-md transition ${
-              allSelected ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-gray-400 cursor-not-allowed text-white'
+              !allSelected || alreadyFinalized
+                ? 'bg-gray-400 cursor-not-allowed text-white'
+                : 'bg-emerald-600 hover:bg-emerald-700 text-white'
             }`}
           >
-            Finalize Attendance
+            {alreadyFinalized ? 'Attendance Already Finalized' : 'Finalize Attendance'}
           </button>
         </div>
       </div>

@@ -13,6 +13,7 @@
   "description": "",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.839.0",
+    "aws-sdk": "^2.1692.0",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
@@ -23,6 +24,9 @@
     "multer": "^2.0.1",
     "node-cron": "^4.1.1",
     "nodemailer": "^7.0.3",
-    "pdfkit": "^0.17.1"
+    "pdfkit": "^0.17.1",
+    "puppeteer": "^24.11.1",
+    "react-router-dom": "^7.6.2",
+    "react-router-hash-link": "^2.4.3"
   }
 }
