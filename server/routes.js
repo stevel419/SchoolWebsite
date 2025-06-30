@@ -6,6 +6,10 @@ const router = express.Router();
 const { Teacher, Student, Grade, Attendance, Comment } = require('./schemas.js');
 const authenticateJWT = require('./middleware/authMiddleware.js');
 const s3 = require('./config/s3Client.js');
+const puppeteer = require('puppeteer');
+const { S3Client, PutObjectCommand, HeadObjectCommand } = require('@aws-sdk/client-s3');
+
+
 
 router.post('/create-user', async (req, res) => {
     try {
@@ -817,8 +821,7 @@ router.post('/finalize-attendance', authenticateJWT, async (req, res) => {
       if (!student.classesMissed || typeof student.classesMissed !== 'object') {
         student.classesMissed = {};
       }
-
-      for (const subject of Object.keys(subjectsMissed)) {
+      for (const subject of Object.keys(missedSubjectMap)) {
         student.classesMissed[subject] = (student.classesMissed[subject] || 0) + 1;
       }
 
@@ -864,6 +867,94 @@ router.get('/attendance-finalized-status', authenticateJWT, async (req, res) => 
     res.status(500).json({ error: "Failed to check attendance status" });
   }
 });
+
+
+
+
+
+
+router.post('/save-reports', async (req, res) => {
+  const reportDict = req.body.reports;
+
+  if (typeof reportDict !== 'object' || !reportDict || Object.keys(reportDict).length === 0) {
+    return res.status(400).json({ error: 'Invalid or empty report dictionary' });
+  }
+
+  try {
+    const browser = await puppeteer.launch({ headless: 'new' });
+
+    const uploadPromises = Object.entries(reportDict).map(async ([reportKey, html]) => {
+      const fileKey = `reports/${reportKey}.pdf`;
+
+      let isExisting = false;
+      try {
+        await s3.send(new HeadObjectCommand({
+          Bucket: process.env.S3_BUCKET_NAME,
+          Key: fileKey
+        }));
+        isExisting = true;
+      } catch (err) {
+        if (err.name !== 'NotFound') throw err;
+      }
+
+      const page = await browser.newPage();
+      await page.setContent(html, { waitUntil: 'networkidle0' });
+      const pdfBuffer = await page.pdf({ format: 'A4' });
+      await page.close();
+
+      await s3.send(new PutObjectCommand({
+        Bucket: process.env.S3_BUCKET_NAME,
+        Key: fileKey,
+        Body: pdfBuffer,
+        ContentType: 'application/pdf',
+        ACL: 'public-read'
+      }));
+
+      const fileUrl = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.S3_REGION}.amazonaws.com/${fileKey}`;
+
+      return {
+        reportKey,
+        fileUrl,
+        message: isExisting ? 'Report updated in S3' : 'Report created in S3'
+      };
+    });
+
+    const results = await Promise.all(uploadPromises);
+    await browser.close();
+
+    res.status(200).json({ reports: results });
+  } catch (err) {
+    console.error('Failed to save reports:', err);
+    res.status(500).json({ error: 'One or more reports failed to save' });
+  }
+});
+
+
+router.get('/get-report-url/:reportKey', async (req, res) => {
+  const reportKey = req.params.reportKey;
+  const fileKey = `reports/${reportKey}.pdf`;
+
+  try {
+    await s3.send(new HeadObjectCommand({
+      Bucket: process.env.S3_BUCKET_NAME,
+      Key: fileKey
+    }));
+
+    const fileUrl = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.S3_REGION}.amazonaws.com/${fileKey}`;
+    res.json({ fileUrl });
+  } catch (err) {
+    if (err.name === 'NotFound') {
+      res.status(404).json({ error: 'Report not found' });
+    } else {
+      console.error(err);
+      res.status(500).json({ error: 'Error checking report' });
+    }
+  }
+});
+
+
+
+
 
 
 module.exports = router;
