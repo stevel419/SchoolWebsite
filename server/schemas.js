@@ -97,8 +97,12 @@ const studentSchema = new mongoose.Schema({
     },
     classesMissed: { 
         type: Object, 
-        default: {} }
-
+        default: {}
+    },
+    reports: [{
+        url: String,
+        form: String
+    }]
 }, {
     timestamps: true
 });

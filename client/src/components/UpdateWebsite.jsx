@@ -56,7 +56,7 @@ function UpdateWebsite() {
   };
 
   const handleDeleteSlide = async (index) => {
-    await fetch(`http://localhost:5000/delete-slide/${index}`, { method: 'DELETE' });
+    await fetch(`http://localhost:3000/delete-slide/${index}`, { method: 'DELETE' });
 
     const updated = await fetch('http://localhost:3000/get-slides').then(res => res.json());
     setSlides(updated);

@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import RenderStudentGradesAndComments from './RenderGradesAndComments.jsx';
-import { handlePrint } from './printUtils.js';
+import { handlePrint, generatePrintContent } from './printUtils.js';
 
 function PortalGrades() {
     const [name, setName] = useState('');
@@ -18,6 +18,117 @@ function PortalGrades() {
     const [sortBy, setSortBy] = useState('name');
     const [sortSubject, setSortSubject] = useState('');
     const [sortOrder, setSortOrder] = useState('desc');
+    const [saveStatus, setSaveStatus] = useState({});
+    const [saveAllStatus, setSaveAllStatus] = useState('');
+    const [savingStates, setSavingStates] = useState({});
+    const [isAdmin, setIsAdmin] = useState(false);
+    const token = sessionStorage.getItem('token');
+
+    const handleSavePdf = async (idx) => {
+        const student = filteredData[idx];
+        const studentKey = `${student.admissionNum}-${student.lastName}-${student.form}`;
+        
+        setSavingStates(prev => ({ ...prev, [studentKey]: true }));
+        setSaveStatus(prev => ({ ...prev, [studentKey]: '' }));
+
+        const pdfContent = {};
+        const content = generatePrintContent(student, calculateSubjectAverage);
+        pdfContent[studentKey] = content;
+
+        try {
+            const token = sessionStorage.getItem('token');
+
+            const res = await fetch('http://localhost:3000/save-reports', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify({ reports: pdfContent })
+            });
+
+            const data = await res.json();
+            
+            if (res.ok) {
+                setSaveStatus(prev => ({ 
+                    ...prev, 
+                    [studentKey]: { 
+                        type: 'success', 
+                        message: 'Saved' 
+                    }
+                }));
+                
+                // Clear success message after 3 seconds
+                setTimeout(() => {
+                    setSaveStatus(prev => {
+                        const newStatus = { ...prev };
+                        delete newStatus[studentKey];
+                        return newStatus;
+                    });
+                }, 3000);
+            } else {
+                setSaveStatus(prev => ({ 
+                    ...prev, 
+                    [studentKey]: { 
+                        type: 'error', 
+                        message: 'Error saving' 
+                    }
+                }));
+            }
+        } catch (error) {
+            setSaveStatus(prev => ({ 
+                ...prev, 
+                [studentKey]: { 
+                    type: 'error', 
+                    message: 'Error saving' 
+                }
+            }));
+        } finally {
+            setSavingStates(prev => {
+                const newStates = { ...prev };
+                delete newStates[studentKey];
+                return newStates;
+            });
+        }
+    };
+
+    const handleSaveAllPdf = async () => {
+        setSaveAllStatus('saving');
+        
+        const pdfContent = {};
+        for (const student of roster) {
+            const content = generatePrintContent(student, calculateSubjectAverage);
+            pdfContent[student.admissionNum + "-" + student.lastName + "-" + student.form] = content;
+        }
+
+        try {
+            const token = sessionStorage.getItem('token');
+
+            const res = await fetch('http://localhost:3000/save-reports', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify({ reports: pdfContent })
+            });
+
+            const data = await res.json();
+            
+            if (res.ok) {
+                setSaveAllStatus('success');
+                
+                // Clear success message after 5 seconds
+                setTimeout(() => {
+                    setSaveAllStatus('');
+                }, 5000);
+            } else {
+                setSaveAllStatus(`error: ${data.error || 'Failed to save reports'}`);
+            }
+        } catch (error) {
+            setSaveAllStatus('error: Error saving all reports. Please try again.');
+        }
+    };
 
     const studentRefs = useRef([]);
 
@@ -105,6 +216,10 @@ function PortalGrades() {
 
     useEffect(() => {
         handleGetRoster();
+
+        if (!token) return;
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        setIsAdmin(payload.isAdmin || false);
     }, []);
 
     const toggleStudentExpansion = (studentId) => {
@@ -365,14 +480,42 @@ function PortalGrades() {
                                                 setFilteredData={setFilteredData}
                                             />
                                         </div>
-                                        <button
-                                            className="ml-auto block my-4 mr-4 px-4 py-2 bg-gray-500 hover:bg-gray-700 text-white font-medium rounded-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-                                        
-                                        >Save Report</button>
-                                        <button
-                                            className="ml-auto block my-4 mr-4 px-4 py-2 bg-blue-500 hover:bg-blue-700 text-white font-medium rounded-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                                            onClick={() => handleStudentPrint(studentIdx)}
-                                        >Print Report</button>
+                                        <div className="flex gap-4 justify-end px-4 my-4">
+                                            {isAdmin && (
+                                                <div className="relative">
+                                                    <button
+                                                        className={`px-4 py-2 font-medium rounded-md transition duration-200 ${
+                                                            savingStates[`${student.admissionNum}-${student.lastName}-${student.form}`]
+                                                                ? 'bg-gray-400 cursor-not-allowed'
+                                                                : 'bg-gray-500 hover:bg-gray-700'
+                                                        } text-white`}
+                                                        onClick={() => handleSavePdf(studentIdx)}
+                                                        disabled={savingStates[`${student.admissionNum}-${student.lastName}-${student.form}`]}
+                                                    >
+                                                        {savingStates[`${student.admissionNum}-${student.lastName}-${student.form}`] 
+                                                            ? 'Saving...' 
+                                                            : 'Save Report'
+                                                        }
+                                                    </button>
+                                                    {/* Status message */}
+                                                    {saveStatus[`${student.admissionNum}-${student.lastName}-${student.form}`] && (
+                                                        <div className={`absolute top-full mt-2 right-0 text-xs px-3 py-2 rounded-md shadow-lg whitespace-nowrap z-10 ${
+                                                            saveStatus[`${student.admissionNum}-${student.lastName}-${student.form}`].type === 'success'
+                                                                ? 'bg-green-50 text-green-700 border border-green-200'
+                                                                : 'bg-red-50 text-red-700 border border-red-200'
+                                                        }`}>
+                                                            {saveStatus[`${student.admissionNum}-${student.lastName}-${student.form}`].message}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                            <button
+                                                className="px-4 py-2 bg-blue-500 hover:bg-blue-700 text-white font-medium rounded-md transition duration-200"
+                                                onClick={() => handleStudentPrint(studentIdx)}
+                                            >
+                                                Print Report
+                                            </button>
+                                        </div>
                                     </>
                                 )}
                             </div>
@@ -383,6 +526,35 @@ function PortalGrades() {
                 {rosterError && (
                     <div className="bg-red-50 border border-red-200 rounded-md p-3">
                         <p className="text-red-600 text-sm">{rosterError}</p>
+                    </div>
+                )}
+
+                {!rosterError && isAdmin && (
+                    <div className="flex flex-col items-end gap-4 mt-8">
+                        <button
+                            className={`px-6 py-3 font-medium rounded-md transition duration-200 ${
+                                saveAllStatus === 'saving'
+                                    ? 'bg-gray-400 cursor-not-allowed'
+                                    : 'bg-emerald-600 hover:bg-emerald-700'
+                            } text-white`}
+                            onClick={handleSaveAllPdf}
+                            disabled={saveAllStatus === 'saving'}
+                        >
+                            {saveAllStatus === 'saving' ? 'Saving All Reports...' : 'Save All Reports'}
+                        </button>
+                        {/* Status message */}
+                        {saveAllStatus && saveAllStatus !== 'saving' && (
+                            <div className={`text-sm px-4 py-2 rounded max-w-md ${
+                                saveAllStatus === 'success'
+                                    ? 'bg-green-100 text-green-700 border border-green-200'
+                                    : 'bg-red-100 text-red-700 border border-red-200'
+                            }`}>
+                                {saveAllStatus === 'success' 
+                                    ? `Successfully saved reports for all ${roster.length} students!`
+                                    : saveAllStatus.replace('error: ', '')
+                                }
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
