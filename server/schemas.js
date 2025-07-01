@@ -29,7 +29,11 @@ const teacherSchema = new mongoose.Schema({
         type: Boolean,
         default: false,
         required: true
-    }
+    },
+    isActive: {
+        type: Boolean,
+        default: true  
+      }
 }, {
     timestamps: true
 });

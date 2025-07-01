@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
+import { useEffect } from "react";
 
 function PortalSignup() {
     const [username, setUsername] = useState('');
@@ -53,6 +54,82 @@ function PortalSignup() {
             setLoading(false);
         }
     }
+
+    function TeacherList() {
+        const [teachers, setTeachers] = useState([]);
+        const [status, setStatus] = useState({});
+      
+        useEffect(() => {
+          const fetchTeachers = async () => {
+            try {
+              const res = await fetch('http://localhost:3000/get-teachers');
+              const data = await res.json();
+              if (res.ok) setTeachers(data);
+            } catch (err) {
+              console.error("Failed to fetch teachers:", err);
+            }
+          };
+          fetchTeachers();
+        }, []);
+      
+        const handleDeactivate = async (teacherId) => {
+          if (!window.confirm("Are you sure you want to deactivate this teacher?")) return;
+          try {
+            setStatus(prev => ({ ...prev, [teacherId]: 'loading' }));
+            const res = await fetch('http://localhost:3000/deactivate-teacher', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ teacherId, confirm: true })
+            });
+      
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed');
+      
+            setTeachers(prev =>
+              prev.map(t => t._id === teacherId ? { ...t, isActive: false } : t)
+            );
+            setStatus(prev => ({ ...prev, [teacherId]: 'success' }));
+            setTimeout(() => {
+              setStatus(prev => {
+                const updated = { ...prev };
+                delete updated[teacherId];
+                return updated;
+              });
+            }, 2000);
+          } catch (err) {
+            console.error(err);
+            setStatus(prev => ({ ...prev, [teacherId]: 'error' }));
+          }
+        };
+      
+        return (
+          <div className="space-y-4">
+            {teachers.map(teacher => (
+              <div key={teacher._id} className="p-4 border rounded flex justify-between items-center">
+                <div>
+                  <p className="font-medium">{teacher.firstName} {teacher.lastName}</p>
+                  <p className="text-sm text-gray-600">Subject: {teacher.subject}</p>
+                  <p className={`text-sm ${teacher.isActive ? 'text-green-600' : 'text-red-500'}`}>
+                    {teacher.isActive ? 'Active' : 'Deactivated'}
+                  </p>
+                </div>
+                <div>
+                  {teacher.isActive ? (
+                    <button
+                      onClick={() => handleDeactivate(teacher._id)}
+                      className="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600"
+                    >
+                      {status[teacher._id] === 'loading' ? 'Processing...' : 'Deactivate'}
+                    </button>
+                  ) : (
+                    <span className="text-sm text-gray-400 italic">Already deactivated</span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+      }
 
     return (
         <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4 py-20">
@@ -211,6 +288,10 @@ function PortalSignup() {
                     >
                         Back to Login
                     </button>
+                </div>
+                <div className="mt-10 border-t pt-6">
+                        <h3 className="text-lg font-bold text-gray-800 mb-4">Current Teachers</h3>
+                        <TeacherList />
                 </div>
             </div>
         </div>
