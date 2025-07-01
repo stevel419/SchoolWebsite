@@ -7,7 +7,7 @@ const Slideshow = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
-    fetch('http://localhost:3000/get-slides')
+    fetch('http://localhost:5000/get-slides')
       .then(res => res.json())
       .then(data => setSlides(data))
       .catch(err => console.error('Error fetching slides:', err));

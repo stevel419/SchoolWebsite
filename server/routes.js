@@ -9,8 +9,6 @@ const s3 = require('./config/s3Client.js');
 const puppeteer = require('puppeteer');
 const { S3Client, PutObjectCommand, HeadObjectCommand } = require('@aws-sdk/client-s3');
 
-
-
 router.post('/create-user', async (req, res) => {
     try {
         const { firstName, lastName, subject, username, password, isAdmin } = req.body;
@@ -384,6 +382,7 @@ router.post('/update-grade', authenticateJWT, async (req, res) => {
         res.status(500).json({ error: "Failed to update student grade" });
     }
 });
+
 router.post('/update-attendance', authenticateJWT, async (req, res) => {
   try {
     const isAdmin = req.user.isAdmin;
@@ -444,11 +443,6 @@ router.post('/update-attendance', authenticateJWT, async (req, res) => {
     res.status(500).json({ error: "Failed to update attendance" });
   }
 });
-
-
-
-
-
   
 router.post('/update-comment', authenticateJWT, async (req, res) => {
     try {
@@ -847,9 +841,6 @@ router.post('/finalize-attendance', authenticateJWT, async (req, res) => {
   }
 });
 
-
-
-
 router.get('/attendance-finalized-status', authenticateJWT, async (req, res) => {
   try {
     const teacherId = req.user.teacherId;
@@ -868,11 +859,6 @@ router.get('/attendance-finalized-status', authenticateJWT, async (req, res) => 
   }
 });
 
-
-
-
-
-
 router.post('/save-reports', async (req, res) => {
   const reportDict = req.body.reports;
 
@@ -885,6 +871,8 @@ router.post('/save-reports', async (req, res) => {
 
     const uploadPromises = Object.entries(reportDict).map(async ([reportKey, html]) => {
       const fileKey = `reports/${reportKey}.pdf`;
+      const admissionNum = reportKey.split('-')[0];
+      const form = reportKey.split('-')[2];
 
       let isExisting = false;
       try {
@@ -912,10 +900,32 @@ router.post('/save-reports', async (req, res) => {
 
       const fileUrl = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.S3_REGION}.amazonaws.com/${fileKey}`;
 
+      const student = await Student.findOne({ admissionNum });
+      if (student) {
+        student.reports = student.reports || [];
+        
+        const existingIndex = student.reports.findIndex(r => r.form === form);
+        if (existingIndex >= 0) {
+          student.reports[existingIndex] = {
+            url: fileUrl,
+            form: form
+          };
+        } else {
+          student.reports.push({
+            url: fileUrl,
+            form: form
+          });
+        }
+
+        await student.save();
+      } else {
+        return res.status(400).json({ error: "Student not found in database" });
+      }
+
       return {
         reportKey,
         fileUrl,
-        message: isExisting ? 'Report updated in S3' : 'Report created in S3'
+        message: isExisting ? 'Report updated in S3 and MongoDB' : 'Report created in S3 and saved in MongoDB'
       };
     });
 
@@ -928,33 +938,5 @@ router.post('/save-reports', async (req, res) => {
     res.status(500).json({ error: 'One or more reports failed to save' });
   }
 });
-
-
-router.get('/get-report-url/:reportKey', async (req, res) => {
-  const reportKey = req.params.reportKey;
-  const fileKey = `reports/${reportKey}.pdf`;
-
-  try {
-    await s3.send(new HeadObjectCommand({
-      Bucket: process.env.S3_BUCKET_NAME,
-      Key: fileKey
-    }));
-
-    const fileUrl = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.S3_REGION}.amazonaws.com/${fileKey}`;
-    res.json({ fileUrl });
-  } catch (err) {
-    if (err.name === 'NotFound') {
-      res.status(404).json({ error: 'Report not found' });
-    } else {
-      console.error(err);
-      res.status(500).json({ error: 'Error checking report' });
-    }
-  }
-});
-
-
-
-
-
 
 module.exports = router;

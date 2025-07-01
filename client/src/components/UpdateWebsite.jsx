@@ -16,10 +16,10 @@ function UpdateWebsite() {
   useEffect(() => {
     if (isAuthorized) {
       // Fetch slides and staff only after login
-      fetch('http://localhost:3000/get-slides')
+      fetch('http://localhost:5000/get-slides')
         .then(res => res.json())
         .then(data => setSlides(data));
-      fetch('http://localhost:3000/get-staff')
+      fetch('http://localhost:5000/get-staff')
         .then(res => res.json())
         .then(data => setStaff(data));
     }
@@ -27,7 +27,7 @@ function UpdateWebsite() {
 
   const checkPassword = async (e) => {
     e.preventDefault();
-    const res = await fetch('http://localhost:3000/check-password', {
+    const res = await fetch('http://localhost:5000/check-password', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ password: passwordInput })
@@ -43,7 +43,7 @@ function UpdateWebsite() {
     formData.append('image', slideImage);
     formData.append('text', slideText);
 
-    await fetch('http://localhost:3000/add-slide', {
+    await fetch('http://localhost:5000/add-slide', {
       method: 'POST',
       body: formData
     });
@@ -51,14 +51,14 @@ function UpdateWebsite() {
     setSlideText('');
     setSlideImage(null);
 
-    const updated = await fetch('http://localhost:3000/get-slides').then(res => res.json());
+    const updated = await fetch('http://localhost:5000/get-slides').then(res => res.json());
     setSlides(updated);
   };
 
   const handleDeleteSlide = async (index) => {
     await fetch(`http://localhost:5000/delete-slide/${index}`, { method: 'DELETE' });
 
-    const updated = await fetch('http://localhost:3000/get-slides').then(res => res.json());
+    const updated = await fetch('http://localhost:5000/get-slides').then(res => res.json());
     setSlides(updated);
   };
 
@@ -69,20 +69,20 @@ function UpdateWebsite() {
     formData.append('name', staffName);
     formData.append('position', staffPosition);
 
-    await fetch('http://localhost:3000/add-staff', { method: 'POST', body: formData });
+    await fetch('http://localhost:5000/add-staff', { method: 'POST', body: formData });
 
     setStaffName('');
     setStaffPosition('');
     setStaffImage(null);
 
-    const updated = await fetch('http://localhost:3000/get-staff').then(res => res.json());
+    const updated = await fetch('http://localhost:5000/get-staff').then(res => res.json());
     setStaff(updated);
   };
 
   const handleDeleteStaff = async (index) => {
-    await fetch(`http://localhost:3000/delete-staff/${index}`, { method: 'DELETE' });
+    await fetch(`http://localhost:5000/delete-staff/${index}`, { method: 'DELETE' });
 
-    const updated = await fetch('http://localhost:3000/get-staff').then(res => res.json());
+    const updated = await fetch('http://localhost:5000/get-staff').then(res => res.json());
     setStaff(updated);
   };
 
