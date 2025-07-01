@@ -245,7 +245,7 @@ function PortalAttendance() {
         ))}
 
         {/* Finalize Attendance */}
-        <div className="mt-8 flex justify-end">
+        <div className="mt-6 flex justify-end">
           <button
             onClick={handleFinalizeAttendance}
             disabled={!allSelected || alreadyFinalized}
