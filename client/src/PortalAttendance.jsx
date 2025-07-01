@@ -18,7 +18,7 @@ function PortalAttendance() {
     setIsAdmin(payload.isAdmin || false);
     if (!payload.isAdmin && payload.subject) setTeacherSubjects([payload.subject]);
 
-    fetch('http://localhost:5000/get-students', {
+    fetch('http://localhost:3000/get-students', {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then(res => res.json())
@@ -41,7 +41,7 @@ function PortalAttendance() {
   const handleSearch = async () => {
     try {
       const res = await fetch(
-        `http://localhost:5000/search-students?name=${encodeURIComponent(searchTerm)}`,
+        `http://localhost:3000/search-students?name=${encodeURIComponent(searchTerm)}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const data = await res.json();
@@ -56,7 +56,7 @@ function PortalAttendance() {
 
   useEffect(() => {
     if (!token) return;
-    fetch('http://localhost:5000/attendance-finalized-status', {
+    fetch('http://localhost:3000/attendance-finalized-status', {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then(res => res.json())
@@ -97,7 +97,7 @@ function PortalAttendance() {
 
   const handleFinalizeAttendance = async () => {
     try {
-      const res = await fetch('http://localhost:5000/finalize-attendance', {
+      const res = await fetch('http://localhost:3000/finalize-attendance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ records: pendingAttendance })

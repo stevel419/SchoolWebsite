@@ -52,6 +52,9 @@ router.post('/login', async (req, res) => {
         if (!pwValid) {
             return res.status(400).json({ error: "Invalid password" });
         }
+        if (!teacher.isActive) {
+          return res.status(403).json({ error: "Your account has been deactivated. Please contact an administrator." });
+        }
 
         const token = jwt.sign({
             isAdmin: teacher.isAdmin,
@@ -937,5 +940,189 @@ router.post('/save-reports', async (req, res) => {
     res.status(500).json({ error: 'One or more reports failed to save' });
   }
 });
+
+
+router.get('/get-report-url/:reportKey', async (req, res) => {
+  const reportKey = req.params.reportKey;
+  const fileKey = `reports/${reportKey}.pdf`;
+
+  try {
+    await s3.send(new HeadObjectCommand({
+      Bucket: process.env.S3_BUCKET_NAME,
+      Key: fileKey
+    }));
+
+    const fileUrl = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.S3_REGION}.amazonaws.com/${fileKey}`;
+    res.json({ fileUrl });
+  } catch (err) {
+    if (err.name === 'NotFound') {
+      res.status(404).json({ error: 'Report not found' });
+    } else {
+      console.error(err);
+      res.status(500).json({ error: 'Error checking report' });
+    }
+  }
+});
+
+router.post('/deactivate-teacher', async (req, res) => {
+  try {
+      const { teacherId, confirm } = req.body;
+
+      if (!teacherId || confirm !== true) {
+          return res.status(400).json({ error: "Missing teacher ID or confirmation" });
+      }
+
+      const teacher = await Teacher.findById(teacherId);
+      if (!teacher) {
+          return res.status(404).json({ error: "Teacher not found" });
+      }
+
+      teacher.isActive = false;
+      await teacher.save();
+
+      res.status(200).json({ message: "Teacher deactivated successfully" });
+  } catch (e) {
+      console.error(e);
+      res.status(500).json({ error: "Failed to deactivate teacher" });
+  }
+});
+
+router.get('/get-teachers', async (req, res) => {
+  try {
+    const teachers = await Teacher.find().select('-password'); // exclude password
+    res.status(200).json(teachers);
+  } catch (err) {
+    console.error("Failed to fetch teachers:", err);
+    res.status(500).json({ error: "Failed to fetch teachers" });
+  }
+});
+
+
+router.get('/exam-results', authenticateJWT, async (req, res) => {
+  try {
+      const { form, subject } = req.query;
+
+      // Fetch all students (optionally filter by form)
+      const students = await Student.find(form ? { form: Number(form), isActive: true } : { isActive: true });
+
+      const studentMap = {};
+      students.forEach(student => {
+          studentMap[student._id.toString()] = student;
+      });
+
+      // Fetch all grades (optionally filter by subject)
+      const gradeQuery = subject ? { subject } : {};
+      const grades = await Grade.find(gradeQuery).populate('student');
+
+      const filteredGrades = grades.filter(g => studentMap[g.student._id]);
+
+      const results = [];
+
+      for (const g of filteredGrades) {
+          const { student, assessments, subject } = g;
+
+          const weights = {
+              "Midterm 1": 0.2,
+              "Midterm 2": 0.2,
+              "Endterm": 0.3,
+              "Final": 0.3
+          };
+
+          let total = 0, weightSum = 0;
+          for (const a of assessments) {
+              const w = weights[a.name];
+              if (w && a.score != null) {
+                  total += a.score * w;
+                  weightSum += w;
+              }
+          }
+
+          const avg = weightSum > 0 ? total / weightSum : null;
+          if (avg !== null) {
+              results.push({
+                  student: {
+                      firstName: student.firstName,
+                      lastName: student.lastName,
+                      form: student.form,
+                      id: student._id
+                  },
+                  subject,
+                  average: avg
+              });
+          }
+      }
+
+      // Group by subject + form
+      const grouped = {};
+      for (const entry of results) {
+        const key = `${entry.student.form}-${entry.subject}`;
+        if (!grouped[key]) grouped[key] = [];
+          grouped[key].push(entry);
+      }
+
+      // Final analytics
+      const output = Object.entries(grouped).map(([groupKey, entries]) => {
+          const [form, subject] = groupKey.split('-');
+
+          const scores = entries.map(e => e.average).sort((a, b) => a - b);
+
+          const percentile = (p) => {
+              const idx = Math.floor(p / 100 * scores.length);
+              return scores[idx] || 0;
+          };
+
+          const gradeCount = { A: 0, B: 0, C: 0, D: 0, E: 0, S: 0, F: 0 };
+          const letter = (form, avg) => {
+              form = Number(form);
+              if (form >= 5) {
+                  if (avg >= 80) return 'A';
+                  if (avg >= 70) return 'B';
+                  if (avg >= 60) return 'C';
+                  if (avg >= 50) return 'D';
+                  if (avg >= 40) return 'E';
+                  if (avg >= 35) return 'S';
+                  return 'F';
+              } else {
+                  if (avg >= 75) return 'A';
+                  if (avg >= 65) return 'B';
+                  if (avg >= 45) return 'C';
+                  if (avg >= 30) return 'D';
+                  return 'F';
+              }
+          };
+
+          for (const e of entries) {
+              gradeCount[letter(form, e.average)]++;
+          }
+
+          const topStudents = entries
+              .sort((a, b) => b.average - a.average)
+              .slice(0, 5)
+              .map(e => ({ name: `${e.student.firstName} ${e.student.lastName}`, average: e.average }));
+
+          return {
+              form: Number(form),
+              subject,
+              average: (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(2),
+              percentiles: {
+                  p25: percentile(25),
+                  p50: percentile(50),
+                  p75: percentile(75)
+              },
+              gradeCount,
+              top5: topStudents
+          };
+      });
+
+      res.json(output);
+
+  } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Failed to compute exam results' });
+  }
+});
+
+
+
 
 module.exports = router;
