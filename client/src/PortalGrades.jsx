@@ -530,7 +530,7 @@ function PortalGrades() {
                 )}
 
                 {!rosterError && isAdmin && (
-                    <div className="flex flex-col items-end gap-4 mt-8">
+                    <div className="flex flex-col items-end gap-4 mt-6">
                         <button
                             className={`px-6 py-3 font-medium rounded-md transition duration-200 ${
                                 saveAllStatus === 'saving'

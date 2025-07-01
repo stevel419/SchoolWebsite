@@ -390,36 +390,63 @@ const PortalStudentForm = ({ mode = 'add', student = {}, onDeleteSuccess }) => {
                     </div>
                 )}
                 {/* Submit Button */}
-                <button
-                    onClick={handleSubmit}
-                    disabled={loading}
-                    className="inline-flex justify-center items-center gap-2 w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
-                >
-                    {loading 
-                        ? (mode === 'edit') ? (
-                            <><div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                            Updating Student...</>) : (
-                            <><div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                            Adding Student...</>)
-                        : (mode === 'edit') ? (<><Pencil className="h-4 w-4" />Update Student</>) : (<><SquarePlus className="h-4 w-4" />Add Student</>)}
-                </button>
-
-                {mode === 'edit' && (
-                    <>
-                        {/* Delete Button */}
-                        <div className="flex justify-center items-center">
+                <div className="pt-4 border-t border-gray-200">
+                    {mode === 'edit' ? (
+                        <div className="flex flex-col sm:flex-row gap-4">
+                            <button
+                                onClick={handleSubmit}
+                                disabled={loading}
+                                className="flex-1 inline-flex justify-center items-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                            >
+                                {loading ? (
+                                    <>
+                                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                                        Updating Student...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Pencil className="h-4 w-4" />
+                                        Update Student
+                                    </>
+                                )}
+                            </button>
+                            
                             <button
                                 onClick={() => {
                                     setStudentToDelete(student.admissionNum);
                                     setShowConfirmModal(true);
                                 }}
-                                disabled={deleteLoading}
-                                className="inline-flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 disabled:bg-red-400 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 shadow-sm"
+                                disabled={deleteLoading || loading}
+                                className="flex-1 inline-flex justify-center items-center gap-2 bg-red-600 hover:bg-red-700 disabled:bg-red-400 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                             >
                                 <Trash2 className="h-4 w-4" />
                                 Delete Student
                             </button>
                         </div>
+                    ) : (
+                        <div className="flex justify-center">
+                            <button
+                                onClick={handleSubmit}
+                                disabled={loading}
+                                className="inline-flex justify-center items-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 disabled:cursor-not-allowed text-white font-medium py-3 px-8 rounded-lg transition duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 min-w-[200px]"
+                            >
+                                {loading ? (
+                                    <>
+                                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                                        Adding Student...
+                                    </>
+                                ) : (
+                                    <>
+                                        <SquarePlus className="h-4 w-4" />
+                                        Add Student
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    )}
+                </div>
+                {mode === 'edit' && (
+                    <>
                         {showConfirmModal && (
                             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4">
                                 <div className="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden">
@@ -471,7 +498,7 @@ const PortalStudentForm = ({ mode = 'add', student = {}, onDeleteSuccess }) => {
                                             disabled={deleteLoading}
                                             className="flex-1 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
                                         >
-                                            Cancel
+                                            No, Don't Delete
                                         </button>
                                         <button
                                             onClick={handleDelete}

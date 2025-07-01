@@ -877,7 +877,7 @@ router.post('/save-reports', async (req, res) => {
       let isExisting = false;
       try {
         await s3.send(new HeadObjectCommand({
-          Bucket: process.env.S3_BUCKET_NAME,
+          Bucket: process.env.S3_BUCKET,
           Key: fileKey
         }));
         isExisting = true;
@@ -891,14 +891,13 @@ router.post('/save-reports', async (req, res) => {
       await page.close();
 
       await s3.send(new PutObjectCommand({
-        Bucket: process.env.S3_BUCKET_NAME,
+        Bucket: process.env.S3_BUCKET,
         Key: fileKey,
         Body: pdfBuffer,
         ContentType: 'application/pdf',
-        ACL: 'public-read'
       }));
 
-      const fileUrl = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.S3_REGION}.amazonaws.com/${fileKey}`;
+      const fileUrl = `https://${process.env.S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`;
 
       const student = await Student.findOne({ admissionNum });
       if (student) {
