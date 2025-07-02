@@ -878,7 +878,7 @@ router.post('/save-reports', async (req, res) => {
   try {
     const browser = await puppeteer.launch({
       headless: 'new',
-      executablePath: puppeteer.executablePath(),
+      executablePath: '/tmp/puppeteer-cache/chrome/linux-138.0.7204.92/chrome-linux64/chrome',
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
     const uploadPromises = Object.entries(reportDict).map(async ([reportKey, html]) => {
