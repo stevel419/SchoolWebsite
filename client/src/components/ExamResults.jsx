@@ -4,7 +4,7 @@ const ExamResults = () => {
   const [results, setResults] = useState([]);
 
   useEffect(() => {
-    fetch('http://localhost:3000/get-exam-results')
+    fetch('http://localhost:5000/get-exam-results')
       .then(res => res.json())
       .then(data => setResults(data));
   }, []);
