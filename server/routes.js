@@ -1098,4 +1098,30 @@ router.get('/exam-results', authenticateJWT, async (req, res) => {
   }
 });
 
+const examResultsPath = path.join(__dirname, 'data', 'examResults.json');
+
+router.get('/get-exam-results', (req, res) => {
+  try {
+    if (!fs.existsSync(examResultsPath)) return res.json([]);
+    const data = fs.readFileSync(examResultsPath, 'utf8');
+    const parsed = JSON.parse(data);
+    if (!Array.isArray(parsed)) return res.json([]);
+    res.json(parsed);
+  } catch (err) {
+    console.error('[GET /get-exam-results] Error:', err);
+    res.status(500).json({ error: 'Failed to read exam results' });
+  }
+});
+
+router.post('/update-exam-results', (req, res) => {
+  try {
+    const { results } = req.body;
+    fs.writeFileSync(examResultsPath, JSON.stringify(results, null, 2));
+    res.sendStatus(200);
+  } catch (err) {
+    console.error('[POST /update-exam-results] Error:', err);
+    res.status(500).json({ error: 'Failed to update exam results' });
+  }
+});
+
 module.exports = router;

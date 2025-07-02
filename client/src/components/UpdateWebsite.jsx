@@ -3,15 +3,18 @@ import { useState, useEffect } from 'react';
 function UpdateWebsite() {
   const [slides, setSlides] = useState([]);
   const [staff, setStaff] = useState([]);
-  const [isAuthorized, setIsAuthorized] = useState(false); // Authorized flag
-  const [passwordInput, setPasswordInput] = useState(''); // Password input
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [passwordInput, setPasswordInput] = useState('');
 
-  // State for slide and staff data
   const [slideText, setSlideText] = useState('');
   const [slideImage, setSlideImage] = useState(null);
   const [staffName, setStaffName] = useState('');
   const [staffPosition, setStaffPosition] = useState('');
   const [staffImage, setStaffImage] = useState(null);
+
+  const [newYear, setNewYear] = useState('');
+  const [newLink, setNewLink] = useState('');
+  const [examResults, setExamResults] = useState([]);
 
   useEffect(() => {
     if (isAuthorized) {
@@ -22,6 +25,9 @@ function UpdateWebsite() {
       fetch('http://localhost:5000/get-staff')
         .then(res => res.json())
         .then(data => setStaff(data));
+      fetch('http://localhost:5000/get-exam-results')
+        .then(res => res.json())
+        .then(data => setExamResults(data));
     }
   }, [isAuthorized]);
 
@@ -32,7 +38,6 @@ function UpdateWebsite() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ password: passwordInput })
     });
-
     if (res.ok) setIsAuthorized(true);
     else alert('Incorrect password');
   };
@@ -69,7 +74,10 @@ function UpdateWebsite() {
     formData.append('name', staffName);
     formData.append('position', staffPosition);
 
-    await fetch('http://localhost:5000/add-staff', { method: 'POST', body: formData });
+    await fetch('http://localhost:5000/add-staff', {
+      method: 'POST',
+      body: formData
+    });
 
     setStaffName('');
     setStaffPosition('');
@@ -81,9 +89,34 @@ function UpdateWebsite() {
 
   const handleDeleteStaff = async (index) => {
     await fetch(`http://localhost:5000/delete-staff/${index}`, { method: 'DELETE' });
-
     const updated = await fetch('http://localhost:5000/get-staff').then(res => res.json());
     setStaff(updated);
+  };
+
+  const handleAddExamResult = async () => {
+    if (!newYear || !newLink) return;
+
+    const updated = [...examResults, { year: newYear, link: newLink }];
+    setExamResults(updated);
+    setNewYear('');
+    setNewLink('');
+
+    await fetch('http://localhost:5000/update-exam-results', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ results: updated })
+    });
+  };
+
+  const handleDeleteExamResult = async (index) => {
+    const updated = examResults.filter((_, i) => i !== index);
+    setExamResults(updated);
+
+    await fetch('http://localhost:5000/update-exam-results', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ results: updated })
+    });
   };
 
   if (!isAuthorized) {
@@ -109,88 +142,82 @@ function UpdateWebsite() {
       {/* Add Slide */}
       <form onSubmit={handleAddSlide} className="space-y-2 border p-4 rounded-lg">
         <h2 className="font-bold">Add Slide</h2>
-        <label
-          htmlFor="slideFileInput"
-          className="bg-emerald-600 text-white px-4 py-2 rounded-lg cursor-pointer mb-4 inline-block"
-        >
-          Choose Image
-        </label>
-        <input
-          id="slideFileInput"
-          type="file"
-          onChange={e => setSlideImage(e.target.files[0])}
-          className="hidden"
-          required
-        />
+        <label htmlFor="slideFileInput" className="bg-emerald-600 text-white px-4 py-2 rounded-lg cursor-pointer mb-4 inline-block">Choose Image</label>
+        <input id="slideFileInput" type="file" onChange={e => setSlideImage(e.target.files[0])} className="hidden" required />
         {slideImage && <p className="text-sm mt-2 mb-4">Selected: {slideImage.name}</p>}
-        <textarea
-          value={slideText}
-          onChange={e => setSlideText(e.target.value)}
-          placeholder="Slide text"
-          required
-          className="w-full p-2 border"
-        />
+        <textarea value={slideText} onChange={e => setSlideText(e.target.value)} placeholder="Slide text" required className="w-full p-2 border" />
         <button className="bg-emerald-600 text-white px-4 py-2 rounded-lg">Add Slide</button>
       </form>
-  
+
       {/* Delete Slides */}
       <div className="border p-4 rounded-lg space-y-2">
         <h2 className="font-bold">Delete Slides</h2>
         {slides.map((s, index) => (
           <div key={index} className="flex items-center justify-between border-b py-2">
             <span>{s.text}</span>
-            <button
-              onClick={() => handleDeleteSlide(index)}
-              className="bg-red-600 text-white px-2 py-1 rounded-lg"
-            >
-              Delete
-            </button>
+            <button onClick={() => handleDeleteSlide(index)} className="bg-red-600 text-white px-2 py-1 rounded-lg">Delete</button>
           </div>
         ))}
       </div>
-  
+
       {/* Add Staff */}
       <form onSubmit={handleAddStaff} className="space-y-2 border p-4 rounded-lg">
         <h2 className="font-bold">Add Staff</h2>
-        <label
-          htmlFor="staffFileInput"
-          className="bg-emerald-600 text-white px-4 py-2 rounded-lg cursor-pointer mb-4 inline-block"
-        >
-          Choose Image
-        </label>
-        <input
-          id="staffFileInput"
-          type="file"
-          onChange={e => setStaffImage(e.target.files[0])}
-          className="hidden"
-          required
-        />
+        <label htmlFor="staffFileInput" className="bg-emerald-600 text-white px-4 py-2 rounded-lg cursor-pointer mb-4 inline-block">Choose Image</label>
+        <input id="staffFileInput" type="file" onChange={e => setStaffImage(e.target.files[0])} className="hidden" required />
         {staffImage && <p className="text-sm mt-2 mb-4">Selected: {staffImage.name}</p>}
-        <input
-          value={staffName}
-          onChange={e => setStaffName(e.target.value)}
-          placeholder="Name"
-          className="w-full p-2 border"
-          required
-        />
-        <input
-          value={staffPosition}
-          onChange={e => setStaffPosition(e.target.value)}
-          placeholder="Position"
-          className="w-full p-2 border"
-          required
-        />
+        <input value={staffName} onChange={e => setStaffName(e.target.value)} placeholder="Name" className="w-full p-2 border" required />
+        <input value={staffPosition} onChange={e => setStaffPosition(e.target.value)} placeholder="Position" className="w-full p-2 border" required />
         <button className="bg-emerald-600 text-white px-4 py-2 rounded-lg">Add Staff</button>
       </form>
-  
+
       {/* Delete Staff */}
-      <div className="border p-4 rounded space-y-2">
+      <div className="border p-4 rounded-lg space-y-2">
         <h2 className="font-bold">Delete Staff</h2>
         {staff.map((s, index) => (
           <div key={index} className="flex items-center justify-between border-b py-2">
             <span>{s.name} — {s.position}</span>
+            <button onClick={() => handleDeleteStaff(index)} className="bg-red-600 text-white px-2 py-1 rounded-lg">Delete</button>
+          </div>
+        ))}
+      </div>
+
+      {/* Add Exam Result */}
+      <div className="border p-4 rounded-lg space-y-4">
+        <h2 className="font-bold text-lg">Add Exam Result Link</h2>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <input
+            type="number"
+            value={newYear}
+            onChange={e => setNewYear(e.target.value)}
+            placeholder="Year"
+            className="p-2 border rounded w-full sm:w-32"
+          />
+          <input
+            type="text"
+            value={newLink}
+            onChange={e => setNewLink(e.target.value)}
+            placeholder="PDF link or S3 URL"
+            className="p-2 border rounded-lg flex-grow"
+          />
+          <button
+            onClick={handleAddExamResult}
+            disabled={!newYear || !newLink}
+            className="bg-emerald-600 text-white px-4 py-2 rounded-lg disabled:opacity-50"
+          >
+            Add Result Link
+          </button>
+        </div>
+      </div>
+
+      {/* Delete Exam Results */}
+      <div className="border p-4 rounded-lg space-y-2">
+        <h2 className="font-bold text-lg">Delete Exam Result Links</h2>
+        {examResults.map((r, index) => (
+          <div key={index} className="flex items-center justify-between border-b py-2">
+            <span>{r.year} — <a href={r.link} className="text-blue-600 underline" target="_blank" rel="noopener noreferrer">View Result</a></span>
             <button
-              onClick={() => handleDeleteStaff(index)}
+              onClick={() => handleDeleteExamResult(index)}
               className="bg-red-600 text-white px-2 py-1 rounded-lg"
             >
               Delete

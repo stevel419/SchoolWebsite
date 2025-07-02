@@ -9,6 +9,7 @@ const morgan = require('morgan');
 const helmet = require('helmet');
 const compression = require('compression');
 const rateLimit = require('express-rate-limit');
+const yourMidnightTask = require('./utils/midnightTask');
 
 const app = express();
 const port = process.env.PORT || 5000;
