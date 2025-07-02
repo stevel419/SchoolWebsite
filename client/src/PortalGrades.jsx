@@ -36,9 +36,10 @@ function PortalGrades() {
         pdfContent[studentKey] = content;
 
         try {
+            const baseURL = import.meta.env.VITE_API_BASE_URL
             const token = sessionStorage.getItem('token');
 
-            const res = await fetch('http://localhost:5000/save-reports', {
+            const res = await fetch(`${baseURL}/save-reports`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -102,9 +103,10 @@ function PortalGrades() {
         }
 
         try {
+            const baseURL = import.meta.env.VITE_API_BASE_URL
             const token = sessionStorage.getItem('token');
 
-            const res = await fetch('http://localhost:5000/save-reports', {
+            const res = await fetch(`${baseURL}/save-reports`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -191,9 +193,10 @@ function PortalGrades() {
         setRosterError('');
 
         try {
+            const baseURL = import.meta.env.VITE_API_BASE_URL
             const token = sessionStorage.getItem('token');
 
-            const res = await fetch('http://localhost:5000/get-students', {
+            const res = await fetch(`${baseURL}/get-students`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',

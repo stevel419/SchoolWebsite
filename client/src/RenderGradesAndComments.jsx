@@ -21,8 +21,9 @@ function RenderGradesAndComments({
             setUpdateStatus(prev => ({ ...prev, [key]: 'loading' }));
 
             try {
+                const baseURL = import.meta.env.VITE_API_BASE_URL
                 const token = sessionStorage.getItem('token');
-                const res = await fetch('http://localhost:5000/update-grade', {
+                const res = await fetch(`${baseURL}/update-grade`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -100,8 +101,9 @@ function RenderGradesAndComments({
             setUpdateCommentStatus(prev => ({ ...prev, [commentKey]: 'loading' }));
 
             try {
+                const baseURL = import.meta.env.VITE_API_BASE_URL
                 const token = sessionStorage.getItem('token');
-                const res = await fetch('http://localhost:5000/update-comment', {
+                const res = await fetch(`${baseURL}/update-comment`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

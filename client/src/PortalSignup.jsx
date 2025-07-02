@@ -28,7 +28,9 @@ function PortalSignup() {
         setSuccess('');
 
         try {
-            const res = await fetch('http://localhost:5000/create-user', {
+            const baseURL = import.meta.env.VITE_API_BASE_URL
+
+            const res = await fetch(`${baseURL}/create-user`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({firstName, lastName, subject, username, password, isAdmin})
@@ -62,7 +64,9 @@ function PortalSignup() {
         useEffect(() => {
           const fetchTeachers = async () => {
             try {
-              const res = await fetch('http://localhost:5000/get-teachers');
+              const baseURL = import.meta.env.VITE_API_BASE_URL
+            
+              const res = await fetch(`${baseURL}/get-teachers`);
               const data = await res.json();
               if (res.ok) setTeachers(data);
             } catch (err) {
@@ -76,7 +80,9 @@ function PortalSignup() {
           if (!window.confirm("Are you sure you want to deactivate this teacher?")) return;
           try {
             setStatus(prev => ({ ...prev, [teacherId]: 'loading' }));
-            const res = await fetch('http://localhost:5000/deactivate-teacher', {
+            const baseURL = import.meta.env.VITE_API_BASE_URL
+
+            const res = await fetch(`${baseURL}/deactivate-teacher`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ teacherId, confirm: true })

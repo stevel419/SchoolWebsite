@@ -17,7 +17,8 @@ function PortalSignupGate() {
         e.preventDefault();
         setError('');
         
-        const res = await fetch('http://localhost:5000/check-password', {
+        const baseURL = import.meta.env.VITE_API_BASE_URL
+        const res = await fetch(`${baseURL}/check-password`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ password })

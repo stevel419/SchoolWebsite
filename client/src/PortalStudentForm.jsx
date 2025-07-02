@@ -60,9 +60,10 @@ const PortalStudentForm = ({ mode = 'add', student = {}, onDeleteSuccess }) => {
                 subjects: subjects.filter(subject => subject.trim() !== ''),
                 isActive
             };
+            const baseURL = import.meta.env.VITE_API_BASE_URL
             const token = sessionStorage.getItem('token');
 
-            const res = await fetch('http://localhost:5000/save-student', {
+            const res = await fetch(`${baseURL}/save-student`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -107,9 +108,10 @@ const PortalStudentForm = ({ mode = 'add', student = {}, onDeleteSuccess }) => {
         setDeleteSuccess('');
 
         try {
+            const baseURL = import.meta.env.VITE_API_BASE_URL
             const token = sessionStorage.getItem("token");
 
-            const res = await fetch(`http://localhost:5000/delete-student/${encodeURIComponent(studentToDelete)}`, {
+            const res = await fetch(`${baseURL}/delete-student/${encodeURIComponent(studentToDelete)}`, {
                 method : 'DELETE',
                 headers : {
                     'Authorization': 'Bearer ' + token

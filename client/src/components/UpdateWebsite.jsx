@@ -17,23 +17,25 @@ function UpdateWebsite() {
   const [examResults, setExamResults] = useState([]);
 
   useEffect(() => {
+    const baseURL = import.meta.env.VITE_API_BASE_URL
     if (isAuthorized) {
       // Fetch slides and staff only after login
-      fetch('http://localhost:5000/get-slides')
+      fetch(`${baseURL}/get-slides`)
         .then(res => res.json())
         .then(data => setSlides(data));
-      fetch('http://localhost:5000/get-staff')
+      fetch(`${baseURL}/get-staff`)
         .then(res => res.json())
         .then(data => setStaff(data));
-      fetch('http://localhost:5000/get-exam-results')
+      fetch(`${baseURL}/get-exam-results`)
         .then(res => res.json())
         .then(data => setExamResults(data));
     }
   }, [isAuthorized]);
 
   const checkPassword = async (e) => {
+    const baseURL = import.meta.env.VITE_API_BASE_URL
     e.preventDefault();
-    const res = await fetch('http://localhost:5000/check-password', {
+    const res = await fetch(`${baseURL}/check-password`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ password: passwordInput })
@@ -47,8 +49,8 @@ function UpdateWebsite() {
     const formData = new FormData();
     formData.append('image', slideImage);
     formData.append('text', slideText);
-
-    await fetch('http://localhost:5000/add-slide', {
+    const baseURL = import.meta.env.VITE_API_BASE_URL
+    await fetch(`${baseURL}/add-slide`, {
       method: 'POST',
       body: formData
     });
@@ -56,25 +58,27 @@ function UpdateWebsite() {
     setSlideText('');
     setSlideImage(null);
 
-    const updated = await fetch('http://localhost:5000/get-slides').then(res => res.json());
+    const updated = await fetch(`${baseURL}/get-slides`).then(res => res.json());
     setSlides(updated);
   };
 
   const handleDeleteSlide = async (index) => {
-    await fetch(`http://localhost:5000/delete-slide/${index}`, { method: 'DELETE' });
+    const baseURL = import.meta.env.VITE_API_BASE_URL
+    await fetch(`${baseURL}/delete-slide/${index}`, { method: 'DELETE' });
 
-    const updated = await fetch('http://localhost:5000/get-slides').then(res => res.json());
+    const updated = await fetch(`${baseURL}/get-slides`).then(res => res.json());
     setSlides(updated);
   };
 
   const handleAddStaff = async (e) => {
     e.preventDefault();
     const formData = new FormData();
+    const baseURL = import.meta.env.VITE_API_BASE_URL
     formData.append('image', staffImage);
     formData.append('name', staffName);
     formData.append('position', staffPosition);
 
-    await fetch('http://localhost:5000/add-staff', {
+    await fetch(`${baseURL}/add-staff`, {
       method: 'POST',
       body: formData
     });
@@ -83,13 +87,14 @@ function UpdateWebsite() {
     setStaffPosition('');
     setStaffImage(null);
 
-    const updated = await fetch('http://localhost:5000/get-staff').then(res => res.json());
+    const updated = await fetch(`${baseURL}/get-staff`).then(res => res.json());
     setStaff(updated);
   };
 
   const handleDeleteStaff = async (index) => {
-    await fetch(`http://localhost:5000/delete-staff/${index}`, { method: 'DELETE' });
-    const updated = await fetch('http://localhost:5000/get-staff').then(res => res.json());
+    const baseURL = import.meta.env.VITE_API_BASE_URL
+    await fetch(`${baseURL}/delete-staff/${index}`, { method: 'DELETE' });
+    const updated = await fetch(`${baseURL}/get-staff`).then(res => res.json());
     setStaff(updated);
   };
 
@@ -100,8 +105,8 @@ function UpdateWebsite() {
     setExamResults(updated);
     setNewYear('');
     setNewLink('');
-
-    await fetch('http://localhost:5000/update-exam-results', {
+    const baseURL = import.meta.env.VITE_API_BASE_URL
+    await fetch(`${baseURL}/update-exam-results`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ results: updated })
@@ -111,8 +116,8 @@ function UpdateWebsite() {
   const handleDeleteExamResult = async (index) => {
     const updated = examResults.filter((_, i) => i !== index);
     setExamResults(updated);
-
-    await fetch('http://localhost:5000/update-exam-results', {
+    const baseURL = import.meta.env.VITE_API_BASE_URL
+    await fetch(`${baseURL}/update-exam-results`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ results: updated })

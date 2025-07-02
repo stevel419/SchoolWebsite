@@ -5,9 +5,9 @@ import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons
 const Slideshow = () => {
   const [slides, setSlides] = useState([]);       // <- make this state
   const [currentIndex, setCurrentIndex] = useState(0);
-
+  const baseURL = import.meta.env.VITE_API_BASE_URL
   useEffect(() => {
-    fetch('http://localhost:5000/get-slides')
+    fetch(`${baseURL}/get-slides`)
       .then(res => res.json())
       .then(data => setSlides(data))
       .catch(err => console.error('Error fetching slides:', err));

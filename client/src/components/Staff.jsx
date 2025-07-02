@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 function Staff() {
   const [staff, setStaff] = useState([]);
-
+  const baseURL = import.meta.env.VITE_API_BASE_URL
   useEffect(() => {
     fetch('http://localhost:5000/get-staff')
       .then(res => res.json())

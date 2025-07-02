@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react';
 
 const ExamResults = () => {
   const [results, setResults] = useState([]);
-
+  const baseURL = import.meta.env.VITE_API_BASE_URL
   useEffect(() => {
-    fetch('http://localhost:5000/get-exam-results')
+    fetch(`${baseURL}/get-exam-results`)
       .then(res => res.json())
       .then(data => setResults(data));
   }, []);
