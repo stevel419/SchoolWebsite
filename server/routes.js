@@ -941,29 +941,6 @@ router.post('/save-reports', async (req, res) => {
   }
 });
 
-
-router.get('/get-report-url/:reportKey', async (req, res) => {
-  const reportKey = req.params.reportKey;
-  const fileKey = `reports/${reportKey}.pdf`;
-
-  try {
-    await s3.send(new HeadObjectCommand({
-      Bucket: process.env.S3_BUCKET_NAME,
-      Key: fileKey
-    }));
-
-    const fileUrl = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.S3_REGION}.amazonaws.com/${fileKey}`;
-    res.json({ fileUrl });
-  } catch (err) {
-    if (err.name === 'NotFound') {
-      res.status(404).json({ error: 'Report not found' });
-    } else {
-      console.error(err);
-      res.status(500).json({ error: 'Error checking report' });
-    }
-  }
-});
-
 router.post('/deactivate-teacher', async (req, res) => {
   try {
       const { teacherId, confirm } = req.body;
@@ -996,7 +973,6 @@ router.get('/get-teachers', async (req, res) => {
     res.status(500).json({ error: "Failed to fetch teachers" });
   }
 });
-
 
 router.get('/exam-results', authenticateJWT, async (req, res) => {
   try {
@@ -1121,8 +1097,5 @@ router.get('/exam-results', authenticateJWT, async (req, res) => {
       res.status(500).json({ error: 'Failed to compute exam results' });
   }
 });
-
-
-
 
 module.exports = router;

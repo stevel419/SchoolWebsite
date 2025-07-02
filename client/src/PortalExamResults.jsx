@@ -14,7 +14,7 @@ function PortalExamResults() {
 
         const fetchResults = async () => {
             try {
-                const res = await fetch("http://localhost:3000/exam-results", {
+                const res = await fetch("http://localhost:5000/exam-results", {
                     method: "GET",
                     headers: {
                         'Content-Type': 'application/json',

@@ -4,7 +4,7 @@ function Staff() {
   const [staff, setStaff] = useState([]);
 
   useEffect(() => {
-    fetch('http://localhost:3000/get-staff')
+    fetch('http://localhost:5000/get-staff')
       .then(res => res.json())
       .then(data => setStaff(data))
       .catch(err => console.error(err));

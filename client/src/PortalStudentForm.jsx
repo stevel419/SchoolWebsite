@@ -62,7 +62,7 @@ const PortalStudentForm = ({ mode = 'add', student = {}, onDeleteSuccess }) => {
             };
             const token = sessionStorage.getItem('token');
 
-            const res = await fetch('http://localhost:3000/save-student', {
+            const res = await fetch('http://localhost:5000/save-student', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -109,7 +109,7 @@ const PortalStudentForm = ({ mode = 'add', student = {}, onDeleteSuccess }) => {
         try {
             const token = sessionStorage.getItem("token");
 
-            const res = await fetch(`http://localhost:3000/delete-student/${encodeURIComponent(studentToDelete)}`, {
+            const res = await fetch(`http://localhost:5000/delete-student/${encodeURIComponent(studentToDelete)}`, {
                 method : 'DELETE',
                 headers : {
                     'Authorization': 'Bearer ' + token

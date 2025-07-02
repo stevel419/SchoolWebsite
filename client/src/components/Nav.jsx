@@ -14,8 +14,7 @@ const Nav = ({isOpen, toggleMenu}) => {
         <nav
             className={`w-full md:w-1/2 px-4 py-6 md:px-10 bg-white md:justify-end absolute md:static top-20 left-0 ${isOpen ? "flex" : "hidden"} md:flex`}
         >
-
-        <ul className= "flex flex-col md:flex-row gap-6 md:gap-6 w-full md:w-auto">
+        <ul className= "flex flex-col md:flex-row gap-6 md:gap-6 w-full md:w-auto items-center">
             {navItems.map((item) => (
                 <li key={item.id}>
                     <Link 
@@ -29,9 +28,6 @@ const Nav = ({isOpen, toggleMenu}) => {
                 </li>
             ))}
         </ul>
-        
-
-
         </nav>
     )
 }

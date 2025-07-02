@@ -7,20 +7,27 @@ function PortalSignupGate() {
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
-    const masterPassword = "12345678";
     const navigate = useNavigate();
 
     const togglePassword = () => {
         setShowPassword(prev => !prev);
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        if (password === masterPassword) {
-            setError('');
+        setError('');
+        
+        const res = await fetch('http://localhost:5000/check-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password })
+        });
+
+        if (res.ok) {
             navigate('/PortalSignup');
-        } else {
-            setError('Incorrect password.');
+        }
+        else {
+            setError('Incorrect password');
         }
     }
 

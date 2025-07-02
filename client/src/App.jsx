@@ -29,7 +29,7 @@ function App() {
   const isNoLayout = noLayoutRoutes.includes(location.pathname);
 
   const isPortalRoute = location.pathname.startsWith("/Portal") || 
-  ["/PortalStudentRecords", "/PortalGrades", "/PortalAttendance"].includes(location.pathname);
+  ["/PortalStudentRecords", "/PortalGrades", "/PortalAttendance", "/PortalExamResults"].includes(location.pathname);
 
   return (
       <div>

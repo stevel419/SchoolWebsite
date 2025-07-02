@@ -16,10 +16,10 @@ function UpdateWebsite() {
   useEffect(() => {
     if (isAuthorized) {
       // Fetch slides and staff only after login
-      fetch('http://localhost:3000/get-slides')
+      fetch('http://localhost:5000/get-slides')
         .then(res => res.json())
         .then(data => setSlides(data));
-      fetch('http://localhost:3000/get-staff')
+      fetch('http://localhost:5000/get-staff')
         .then(res => res.json())
         .then(data => setStaff(data));
     }
@@ -27,7 +27,7 @@ function UpdateWebsite() {
 
   const checkPassword = async (e) => {
     e.preventDefault();
-    const res = await fetch('http://localhost:3000/check-password', {
+    const res = await fetch('http://localhost:5000/check-password', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ password: passwordInput })
@@ -43,7 +43,7 @@ function UpdateWebsite() {
     formData.append('image', slideImage);
     formData.append('text', slideText);
 
-    await fetch('http://localhost:3000/add-slide', {
+    await fetch('http://localhost:5000/add-slide', {
       method: 'POST',
       body: formData
     });
@@ -51,14 +51,14 @@ function UpdateWebsite() {
     setSlideText('');
     setSlideImage(null);
 
-    const updated = await fetch('http://localhost:3000/get-slides').then(res => res.json());
+    const updated = await fetch('http://localhost:5000/get-slides').then(res => res.json());
     setSlides(updated);
   };
 
   const handleDeleteSlide = async (index) => {
-    await fetch(`http://localhost:3000/delete-slide/${index}`, { method: 'DELETE' });
+    await fetch(`http://localhost:5000/delete-slide/${index}`, { method: 'DELETE' });
 
-    const updated = await fetch('http://localhost:3000/get-slides').then(res => res.json());
+    const updated = await fetch('http://localhost:5000/get-slides').then(res => res.json());
     setSlides(updated);
   };
 
@@ -69,20 +69,20 @@ function UpdateWebsite() {
     formData.append('name', staffName);
     formData.append('position', staffPosition);
 
-    await fetch('http://localhost:3000/add-staff', { method: 'POST', body: formData });
+    await fetch('http://localhost:5000/add-staff', { method: 'POST', body: formData });
 
     setStaffName('');
     setStaffPosition('');
     setStaffImage(null);
 
-    const updated = await fetch('http://localhost:3000/get-staff').then(res => res.json());
+    const updated = await fetch('http://localhost:5000/get-staff').then(res => res.json());
     setStaff(updated);
   };
 
   const handleDeleteStaff = async (index) => {
-    await fetch(`http://localhost:3000/delete-staff/${index}`, { method: 'DELETE' });
+    await fetch(`http://localhost:5000/delete-staff/${index}`, { method: 'DELETE' });
 
-    const updated = await fetch('http://localhost:3000/get-staff').then(res => res.json());
+    const updated = await fetch('http://localhost:5000/get-staff').then(res => res.json());
     setStaff(updated);
   };
 
@@ -105,13 +105,13 @@ function UpdateWebsite() {
   }
 
   return (
-    <div className="space-y-10 p-6 pt-20">
+    <div className="space-y-10 p-6 pt-40">
       {/* Add Slide */}
-      <form onSubmit={handleAddSlide} className="space-y-2 border p-4 rounded">
+      <form onSubmit={handleAddSlide} className="space-y-2 border p-4 rounded-lg">
         <h2 className="font-bold">Add Slide</h2>
         <label
           htmlFor="slideFileInput"
-          className="bg-emerald-600 text-white px-4 py-2 rounded cursor-pointer mb-4 inline-block"
+          className="bg-emerald-600 text-white px-4 py-2 rounded-lg cursor-pointer mb-4 inline-block"
         >
           Choose Image
         </label>
@@ -130,18 +130,18 @@ function UpdateWebsite() {
           required
           className="w-full p-2 border"
         />
-        <button className="bg-emerald-600 text-white px-4 py-2 rounded">Add Slide</button>
+        <button className="bg-emerald-600 text-white px-4 py-2 rounded-lg">Add Slide</button>
       </form>
   
       {/* Delete Slides */}
-      <div className="border p-4 rounded space-y-2">
+      <div className="border p-4 rounded-lg space-y-2">
         <h2 className="font-bold">Delete Slides</h2>
         {slides.map((s, index) => (
           <div key={index} className="flex items-center justify-between border-b py-2">
             <span>{s.text}</span>
             <button
               onClick={() => handleDeleteSlide(index)}
-              className="bg-red-600 text-white px-2 py-1 rounded"
+              className="bg-red-600 text-white px-2 py-1 rounded-lg"
             >
               Delete
             </button>
@@ -150,11 +150,11 @@ function UpdateWebsite() {
       </div>
   
       {/* Add Staff */}
-      <form onSubmit={handleAddStaff} className="space-y-2 border p-4 rounded">
+      <form onSubmit={handleAddStaff} className="space-y-2 border p-4 rounded-lg">
         <h2 className="font-bold">Add Staff</h2>
         <label
           htmlFor="staffFileInput"
-          className="bg-emerald-600 text-white px-4 py-2 rounded cursor-pointer mb-4 inline-block"
+          className="bg-emerald-600 text-white px-4 py-2 rounded-lg cursor-pointer mb-4 inline-block"
         >
           Choose Image
         </label>
@@ -180,7 +180,7 @@ function UpdateWebsite() {
           className="w-full p-2 border"
           required
         />
-        <button className="bg-emerald-600 text-white px-4 py-2 rounded">Add Staff</button>
+        <button className="bg-emerald-600 text-white px-4 py-2 rounded-lg">Add Staff</button>
       </form>
   
       {/* Delete Staff */}
@@ -191,7 +191,7 @@ function UpdateWebsite() {
             <span>{s.name} — {s.position}</span>
             <button
               onClick={() => handleDeleteStaff(index)}
-              className="bg-red-600 text-white px-2 py-1 rounded"
+              className="bg-red-600 text-white px-2 py-1 rounded-lg"
             >
               Delete
             </button>

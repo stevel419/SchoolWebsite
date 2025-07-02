@@ -28,7 +28,7 @@ function PortalSignup() {
         setSuccess('');
 
         try {
-            const res = await fetch('http://localhost:3000/create-user', {
+            const res = await fetch('http://localhost:5000/create-user', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({firstName, lastName, subject, username, password, isAdmin})
@@ -62,7 +62,7 @@ function PortalSignup() {
         useEffect(() => {
           const fetchTeachers = async () => {
             try {
-              const res = await fetch('http://localhost:3000/get-teachers');
+              const res = await fetch('http://localhost:5000/get-teachers');
               const data = await res.json();
               if (res.ok) setTeachers(data);
             } catch (err) {
@@ -76,7 +76,7 @@ function PortalSignup() {
           if (!window.confirm("Are you sure you want to deactivate this teacher?")) return;
           try {
             setStatus(prev => ({ ...prev, [teacherId]: 'loading' }));
-            const res = await fetch('http://localhost:3000/deactivate-teacher', {
+            const res = await fetch('http://localhost:5000/deactivate-teacher', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ teacherId, confirm: true })

@@ -38,7 +38,7 @@ function PortalGrades() {
         try {
             const token = sessionStorage.getItem('token');
 
-            const res = await fetch('http://localhost:3000/save-reports', {
+            const res = await fetch('http://localhost:5000/save-reports', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -104,7 +104,7 @@ function PortalGrades() {
         try {
             const token = sessionStorage.getItem('token');
 
-            const res = await fetch('http://localhost:3000/save-reports', {
+            const res = await fetch('http://localhost:5000/save-reports', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -193,7 +193,7 @@ function PortalGrades() {
         try {
             const token = sessionStorage.getItem('token');
 
-            const res = await fetch('http://localhost:3000/get-students', {
+            const res = await fetch('http://localhost:5000/get-students', {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
