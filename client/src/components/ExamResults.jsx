@@ -1,23 +1,13 @@
-import React from 'react';
+import { useEffect, useState } from 'react';
 
 const ExamResults = () => {
-  const results = [
-    {
-      title: 'Exam Results',
-      image: '/placeholder1.jpg',
-      link: '/placeholder'
-    },
-    {
-        title: 'Exam Results',
-        image: '/placeholder1.jpg',
-        link: '/placeholder'
-    },
-    {
-        title: 'Exam Results',
-        image: '/placeholder1.jpg',
-        link: '/placeholder'
-    }
-  ];
+  const [results, setResults] = useState([]);
+
+  useEffect(() => {
+    fetch('http://localhost:3000/get-exam-results')
+      .then(res => res.json())
+      .then(data => setResults(data));
+  }, []);
 
   return (
     <section className="w-full bg-white py-16 px-6 md:px-12">
@@ -27,23 +17,19 @@ const ExamResults = () => {
           Browse the latest academic performance records and official results.
         </p>
 
-        <div className="flex flex-col gap-12">
+        <div className="flex flex-col gap-4 items-center">
           {results.map((item, index) => (
             <a
               key={index}
               href={item.link}
-              className="block rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full sm:w-96 flex items-center justify-between bg-gray-100 border border-gray-200 rounded-md px-4 py-3 hover:bg-emerald-50 hover:border-emerald-500 transition-all duration-200 shadow-sm hover:shadow-md"
             >
-              <img
-                src={item.image}
-                alt={item.title}
-                className="w-full h-72 object-cover"
-              />
-              <div className="p-6 bg-gray-50 text-left">
-                <h3 className="text-2xl font-semibold text-gray-800">
-                  {item.title}
-                </h3>
+              <div className="flex items-center gap-3 text-left">
+                <span className="text-emerald-800 font-medium">{item.year} Exam Results</span>
               </div>
+              <span className="text-sm text-blue-600 hover:underline">View</span>
             </a>
           ))}
         </div>
