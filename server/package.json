@@ -4,7 +4,6 @@
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "npx puppeteer browsers install chrome",
     "start": "node server.js"
   },
   "keywords": [],
@@ -30,6 +29,6 @@
     "node-cron": "^4.1.1",
     "nodemailer": "^7.0.3",
     "pdfkit": "^0.17.1",
-    "puppeteer": "^24.11.2"
+    "playwright": "^1.53.2"
   }
 }

@@ -6,7 +6,7 @@ const router = express.Router();
 const { Teacher, Student, Grade, Attendance, Comment } = require('./schemas.js');
 const authenticateJWT = require('./middleware/authMiddleware.js');
 const s3 = require('./config/s3Client.js');
-const puppeteer = require('puppeteer');
+const { chromium } = require('playwright');
 const { S3Client, PutObjectCommand, HeadObjectCommand } = require('@aws-sdk/client-s3');
 
 router.post('/create-user', async (req, res) => {
@@ -876,10 +876,9 @@ router.post('/save-reports', async (req, res) => {
   }
 
   try {
-    const browser = await puppeteer.launch({
-      headless: 'new'
-      //executablePath: '/opt/render/.cache/puppeteer/chrome/linux-138.0.7204.92/chrome',
-      //args: ['--no-sandbox', '--disable-setuid-sandbox']
+    const browser = await chromium.launch({ 
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
     const uploadPromises = Object.entries(reportDict).map(async ([reportKey, html]) => {
       const fileKey = `reports/${reportKey}.pdf`;
