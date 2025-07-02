@@ -878,6 +878,7 @@ router.post('/save-reports', async (req, res) => {
   try {
     const browser = await chromium.launch({ 
       headless: true,
+      executablePath: '/opt/render/.cache/ms-playwright/chromium-1179/chrome-linux/chrome',
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
     const uploadPromises = Object.entries(reportDict).map(async ([reportKey, html]) => {
@@ -897,7 +898,7 @@ router.post('/save-reports', async (req, res) => {
       }
 
       const page = await browser.newPage();
-      await page.setContent(html, { waitUntil: 'networkidle0' });
+      await page.setContent(html, { waitUntil: 'networkidle' });
       const pdfBuffer = await page.pdf({ format: 'A4' });
       await page.close();
 
