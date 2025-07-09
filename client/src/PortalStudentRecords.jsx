@@ -136,6 +136,7 @@ function PortalStudentRecords() {
 
     const uniqueForms = [...new Set(roster.map(student => student.form))].sort();
     const filteredRoster = getFilteredAndSortedRoster();
+    const hasFilterError = filteredRoster.length === 0 && (filterForm || filterStatus) && roster.length > 0;
 
     useEffect(() => {}, [sortBy]);
 
@@ -232,13 +233,24 @@ function PortalStudentRecords() {
                         </select>
                     </div>
                 </div>
+                {/* Filter Error Message */}
+                {hasFilterError && (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 mb-4">
+                        <div className="flex items-center">
+                            <svg className="w-5 h-5 text-yellow-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                            </svg>
+                            <p className="text-yellow-600 text-sm font-medium">No students found with current filters.</p>
+                        </div>
+                    </div>
+                )}
 
                 {filteredRoster.length > 0 && (
                     <div className="space-y-3">
-                        {filteredRoster.map((student, studentIdx) => {
+                        {filteredRoster.map(student => {
                             const isOpen = expandedStudentIds.includes(student._id);
                             return (
-                                <div key={studentIdx} className="border rounded-lg shadow-sm p-4">
+                                <div key={student._id} className="border rounded-lg shadow-sm p-4">
                                     <div className="flex justify-between items-center">
                                         <div>
                                             <p className="font-semibold text-lg">{student.firstName} {student.lastName}</p>
