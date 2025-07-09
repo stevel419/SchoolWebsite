@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Trash2, AlertTriangle, X, Pencil, SquarePlus } from 'lucide-react';
+import { Trash2, AlertTriangle, X, Pencil, SquarePlus, Check, XCircle } from 'lucide-react';
 
 const PortalStudentForm = ({ mode = 'add', student = {}, onDeleteSuccess }) => {
     const [admissionNum, setAdmissionNum] = useState(student.admissionNum || '');
@@ -10,7 +10,8 @@ const PortalStudentForm = ({ mode = 'add', student = {}, onDeleteSuccess }) => {
     const [religion, setReligion] = useState(student.religion || '');
     const [form, setForm] = useState(student.form || '');
     const [subjects, setSubjects] = useState(student.subjects || ['']);
-    const [isActive, setIsActive] = useState(student.isActive ?? null);
+    const [status, setStatus] = useState(student.isActive || '');
+    const [tuitionOwed, setTuitionOwed] = useState(student.tuitionOwed || '');
     const [gName, setGName] = useState(student.guardian?.name || '');
     const [gNumber, setGNumber] = useState(student.guardian?.phone || '');
     const [gOccupation, setGOccupation] = useState(student.guardian?.occupation || '');
@@ -58,7 +59,8 @@ const PortalStudentForm = ({ mode = 'add', student = {}, onDeleteSuccess }) => {
                 address, 
                 form: Number(form), 
                 subjects: subjects.filter(subject => subject.trim() !== ''),
-                isActive,
+                status,
+                tuitionOwed: Number(tuitionOwed),
                 isEditMode: mode === 'edit'
             };
             const baseURL = import.meta.env.VITE_API_BASE_URL
@@ -86,7 +88,8 @@ const PortalStudentForm = ({ mode = 'add', student = {}, onDeleteSuccess }) => {
                     setReligion('');
                     setForm('');
                     setSubjects(['']);
-                    setIsActive(null);
+                    setStatus('');
+                    setTuitionOwed('');
                     setGName('');
                     setGNumber('');
                     setGOccupation('');
@@ -144,6 +147,9 @@ const PortalStudentForm = ({ mode = 'add', student = {}, onDeleteSuccess }) => {
             setDeleteError('');
         }
     };
+
+    const tuitionAmount = Number(tuitionOwed) || 0;
+    const isTuitionPaid = tuitionAmount === 0;
 
     return (
         <div className="bg-white rounded-lg shadow-lg p-6 mt-3">
@@ -289,38 +295,125 @@ const PortalStudentForm = ({ mode = 'add', student = {}, onDeleteSuccess }) => {
                             </button>
                         </div>
                     </div>
-                    <div>
-                        <label className="block text-gray-700 font-medium mb-2">
+                    
+                    {/* Enrollment Status Section */}
+                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <label className="block text-gray-700 font-medium mb-3">
                             Enrollment Status
                         </label>
-                        <div className="space-y-2">
-                            <label className="flex items-center">
+                        <div className="space-y-3">
+                            <label className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-white transition-colors cursor-pointer">
                                 <input
                                     type="radio"
                                     name="status"
-                                    value="active"
-                                    onChange={() => setIsActive(true)}
+                                    value="Active"
+                                    checked={status === "Active"}
+                                    onChange={(e) => setStatus(e.target.value)}
                                     required
-                                    checked={isActive === true}
-                                    className="w-4 h-4 text-emerald-600 bg-gray-100 border-gray-300"
+                                    className="w-4 h-4 text-emerald-600 bg-gray-100 border-gray-300 focus:ring-emerald-500"
                                 />
-                                <span className="ml-2 text-gray-700">Active</span>
+                                <span className="ml-3 text-gray-700 font-medium">Active</span>
+                                <div className="ml-auto">
+                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        Currently Enrolled
+                                    </span>
+                                </div>
                             </label>
-                            <label className="flex items-center">
+                            <label className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-white transition-colors cursor-pointer">
                                 <input
                                     type="radio"
                                     name="status"
-                                    value="graduated"
-                                    onChange={() => setIsActive(false)}
+                                    value="Inactive"
+                                    checked={status === "Inactive"}
+                                    onChange={(e) => setStatus(e.target.value)}
                                     required
-                                    checked={isActive === false}
-                                    className="w-4 h-4 text-emerald-600 bg-gray-100 border-gray-300"
+                                    className="w-4 h-4 text-emerald-600 bg-gray-100 border-gray-300 focus:ring-emerald-500"
                                 />
-                                <span className="ml-2 text-gray-700">Graduated</span>
+                                <span className="ml-3 text-gray-700 font-medium">Inactive</span>
+                                <div className="ml-auto">
+                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                        Not Enrolled
+                                    </span>
+                                </div>
+                            </label>
+                            <label className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-white transition-colors cursor-pointer">
+                                <input
+                                    type="radio"
+                                    name="status"
+                                    value="Graduated"
+                                    checked={status === "Graduated"}
+                                    onChange={(e) => setStatus(e.target.value)}
+                                    required
+                                    className="w-4 h-4 text-emerald-600 bg-gray-100 border-gray-300 focus:ring-emerald-500"
+                                />
+                                <span className="ml-3 text-gray-700 font-medium">Graduated</span>
+                                <div className="ml-auto">
+                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                        Completed
+                                    </span>
+                                </div>
                             </label>
                         </div>
                     </div>
+
+                    {/* Tuition Owed Section */}
+                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <label className="block text-gray-700 font-medium mb-3">
+                            Tuition Owed
+                        </label>
+                        <div className="flex items-center gap-4">
+                            <div className="flex-1">
+                                <div className="relative">
+                                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">
+                                        $
+                                    </span>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        required
+                                        value={tuitionOwed}
+                                        onChange={(e) => setTuitionOwed(e.target.value)}
+                                        placeholder="0.00"
+                                        className="w-full pl-8 pr-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white"
+                                    />
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                {isTuitionPaid ? (
+                                    <div className="flex items-center gap-2 text-green-600">
+                                        <div className="p-2 bg-green-100 rounded-full">
+                                            <Check className="h-5 w-5" />
+                                        </div>
+                                        <span className="font-medium text-sm">Paid in Full</span>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center gap-2 text-red-600">
+                                        <div className="p-2 bg-red-100 rounded-full">
+                                            <XCircle className="h-5 w-5" />
+                                        </div>
+                                        <span className="font-medium text-sm">Outstanding</span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                        {!isTuitionPaid && tuitionAmount > 0 && (
+                            <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-md">
+                                <p className="text-red-700 text-sm font-medium">
+                                    Outstanding balance: ${tuitionAmount.toFixed(2)}
+                                </p>
+                            </div>
+                        )}
+                        {isTuitionPaid && (
+                            <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-md">
+                                <p className="text-green-700 text-sm font-medium">
+                                    No outstanding balance
+                                </p>
+                            </div>
+                        )}
+                    </div>
                 </div>
+                
                 {/* Guardian Information Section */}
                 <div className="space-y-4">
                     <h3 className="text-lg font-bold text-gray-800 border-b border-gray-200 pb-2">
@@ -381,6 +474,7 @@ const PortalStudentForm = ({ mode = 'add', student = {}, onDeleteSuccess }) => {
                         />
                     </div>
                 </div>
+                
                 {/* Messages */}
                 {error && (
                     <div className="bg-red-50 border border-red-200 rounded-md p-3">
@@ -392,6 +486,7 @@ const PortalStudentForm = ({ mode = 'add', student = {}, onDeleteSuccess }) => {
                         <p className="text-green-600 text-sm">{success}</p>
                     </div>
                 )}
+                
                 {/* Submit Button */}
                 <div className="pt-4 border-t border-gray-200">
                     {mode === 'edit' ? (
@@ -448,77 +543,81 @@ const PortalStudentForm = ({ mode = 'add', student = {}, onDeleteSuccess }) => {
                         </div>
                     )}
                 </div>
-                {mode === 'edit' && (
-                    <>
-                        {showConfirmModal && (
-                            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4">
-                                <div className="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden">
-                                    <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                                        <div className="flex items-center gap-3">
-                                            <div className="p-2 bg-red-100 rounded-full">
-                                                <AlertTriangle className="h-6 w-6 text-red-600" />
-                                            </div>
-                                            <h2 className="text-xl font-semibold text-gray-900">Delete Student</h2>
-                                        </div>
-                                        <button
-                                            onClick={closeModal}
-                                            disabled={deleteLoading}
-                                            className="p-2 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                        >
-                                            <X className="h-5 w-5 text-gray-500" />
-                                        </button>
+                
+                {/* Delete Confirmation Modal */}
+                {mode === 'edit' && showConfirmModal && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4">
+                        <div className="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden">
+                            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-red-100 rounded-full">
+                                        <AlertTriangle className="h-6 w-6 text-red-600" />
                                     </div>
-                                    <div className="p-6">
-                                        <p className="text-gray-700 mb-4">
-                                            Are you sure you want to delete <strong>{student.firstName} {student.lastName}</strong>?
-                                        </p>
-                                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                                            <div className="flex items-start gap-2">
-                                                <AlertTriangle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-                                                <div>
-                                                    <p className="text-yellow-800 font-medium text-sm">Warning</p>
-                                                    <p className="text-yellow-700 text-sm mt-1">
-                                                        This action cannot be undone. All records for this student will be deleted.
-                                                    </p>
-                                                </div>
-                                            </div>
+                                    <h2 className="text-xl font-semibold text-gray-900">Delete Student</h2>
+                                </div>
+                                <button
+                                    onClick={closeModal}
+                                    disabled={deleteLoading}
+                                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <X className="h-5 w-5 text-gray-500" />
+                                </button>
+                            </div>
+                            <div className="p-6">
+                                <p className="text-gray-700 mb-4">
+                                    Are you sure you want to delete <strong>{student.firstName} {student.lastName}</strong>?
+                                </p>
+                                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                                    <div className="flex items-start gap-2">
+                                        <AlertTriangle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                                        <div>
+                                            <p className="text-yellow-800 font-medium text-sm">Warning</p>
+                                            <p className="text-yellow-700 text-sm mt-1">
+                                                This action cannot be undone. All records for this student will be deleted.
+                                            </p>
                                         </div>
-                                        {/* Delete Messages */}
-                                        {deleteSuccess && (
-                                            <div className="mt-4 bg-green-50 border border-green-200 rounded-lg p-3">
-                                                <p className="text-green-600 text-sm">{deleteSuccess}</p>
-                                            </div>
-                                        )}
-                                        {deleteError && (
-                                            <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-3">
-                                                <p className="text-red-600 text-sm">{deleteError}</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="flex gap-3 p-6 bg-gray-50 border-t border-gray-200">
-                                        <button
-                                            onClick={closeModal}
-                                            disabled={deleteLoading}
-                                            className="flex-1 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-                                        >
-                                            No, Don't Delete
-                                        </button>
-                                        <button
-                                            onClick={handleDelete}
-                                            disabled={deleteLoading}
-                                            className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-400 disabled:cursor-not-allowed text-white rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-                                        >
-                                            {deleteLoading ? (
-                                                <><div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>Deleting...</>
-                                            ) : (
-                                                <><Trash2 className="h-4 w-4" />Yes, Delete</>
-                                            )}
-                                        </button>
                                     </div>
                                 </div>
+                                {/* Delete Messages */}
+                                {deleteSuccess && (
+                                    <div className="mt-4 bg-green-50 border border-green-200 rounded-lg p-3">
+                                        <p className="text-green-600 text-sm">{deleteSuccess}</p>
+                                    </div>
+                                )}
+                                {deleteError && (
+                                    <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-3">
+                                        <p className="text-red-600 text-sm">{deleteError}</p>
+                                    </div>
+                                )}
                             </div>
-                        )}
-                    </>
+                            <div className="flex gap-3 p-6 bg-gray-50 border-t border-gray-200">
+                                <button
+                                    onClick={closeModal}
+                                    disabled={deleteLoading}
+                                    className="flex-1 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+                                >
+                                    No, Don't Delete
+                                </button>
+                                <button
+                                    onClick={handleDelete}
+                                    disabled={deleteLoading}
+                                    className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-400 disabled:cursor-not-allowed text-white rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                                >
+                                    {deleteLoading ? (
+                                        <>
+                                            <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                                            Deleting...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Trash2 className="h-4 w-4" />
+                                            Yes, Delete
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 )}
             </div>
         </div>
