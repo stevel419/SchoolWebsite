@@ -115,9 +115,9 @@ function PortalStudentRecords() {
         if (filterForm) {
             filtered = filtered.filter(student => student.form === Number(filterForm));
         }
-        if (sortSubject) {
-            filtered = filtered.filter(student => Array.isArray(student.subjects) && student.subjects.includes(sortSubject));
-        }
+        //if (sortSubject) {
+        //    filtered = filtered.filter(student => Array.isArray(student.subjects) && student.subjects.includes(sortSubject));
+        //}
         
         return filtered.sort((a, b) => {
             switch (sortBy) {
