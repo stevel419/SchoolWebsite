@@ -261,7 +261,7 @@ router.post('/save-student', authenticateJWT, async (req, res) => {
             return res.status(403).json({ error: "Only admin can save or update student" });
         }
 
-        const { admissionNum, firstName, lastName, dateOfBirth, gender, religion, guardian, address, form, subjects, isActive, isEditMode } = req.body;
+        const { admissionNum, firstName, lastName, dateOfBirth, gender, religion, guardian, address, form, subjects, status, tuitionOwed, isEditMode } = req.body;
 
         const student = await Student.findOne({ admissionNum }).session(session);
 
@@ -285,7 +285,8 @@ router.post('/save-student', authenticateJWT, async (req, res) => {
                 address,
                 form,
                 subjects,
-                isActive
+                status,
+                tuitionOwed
             });
             const savedStudent = await newStudent.save({ session });
 
@@ -311,7 +312,8 @@ router.post('/save-student', authenticateJWT, async (req, res) => {
         student.address = address;
         student.form = form;
         student.subjects = subjects;
-        student.isActive = isActive;
+        student.status = status;
+        student.tuitionOwed = tuitionOwed;
 
         // Reset all academic records if form changed
         if (formChanged) {
@@ -987,7 +989,7 @@ router.get('/exam-results', authenticateJWT, async (req, res) => {
       const { form, subject } = req.query;
 
       // Fetch all students (optionally filter by form)
-      const students = await Student.find(form ? { form: Number(form), isActive: true } : { isActive: true });
+      const students = await Student.find(form ? { form: Number(form), status: 'Active' } : { status: 'Active' });
 
       const studentMap = {};
       students.forEach(student => {

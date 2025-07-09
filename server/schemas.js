@@ -86,14 +86,18 @@ const studentSchema = new mongoose.Schema({
         type: String,
         required: true,
     }],
+    status: {
+        type: String,
+        enum: ['Active', 'Inactive', 'Graduated'],
+        required: true
+    },
+    tuitionOwed: {
+        type: Number,
+        required: true
+    },
     daysMissed: {
         type: Number,
         default: 0,  
-    },
-    isActive: {
-        type: Boolean,
-        default: true,
-        required: true
     },
     classesMissed: { 
         type: Object, 
