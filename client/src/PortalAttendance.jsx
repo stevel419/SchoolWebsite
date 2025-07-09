@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 
 function PortalAttendance() {
   const [roster, setRoster] = useState([]);
+  const [rosterLoading, setRosterLoading] = useState(false);
+  const [rosterError, setRosterError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [filtered, setFiltered] = useState([]);
   const [expanded, setExpanded] = useState(new Set());
@@ -10,6 +12,9 @@ function PortalAttendance() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [teacherSubjects, setTeacherSubjects] = useState([]);
   const [pendingAttendance, setPendingAttendance] = useState([]);
+  const [finalizeSuccess, setFinalizeSuccess] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [finalizeError, setFinalizeError] = useState('');
   const token = sessionStorage.getItem('token');
 
   useEffect(() => {
@@ -18,6 +23,8 @@ function PortalAttendance() {
     setIsAdmin(payload.isAdmin || false);
     if (!payload.isAdmin && payload.subject) setTeacherSubjects([payload.subject]);
 
+    setRosterLoading(true);
+    setRosterError('');
     const baseURL = import.meta.env.VITE_API_BASE_URL
     fetch(`${baseURL}/get-students`, {
       headers: { Authorization: `Bearer ${token}` }
@@ -28,7 +35,8 @@ function PortalAttendance() {
         setRoster(activeStudents);
         setFiltered(activeStudents);
       })
-      .catch(err => console.error('Error fetching students:', err));
+      .catch(err => setRosterError('Failed to retrieve roster. Reload the page to try again.' || err))
+      .finally(setRosterLoading(false));
   }, []);
 
   const toggleStudentExpansion = admissionNum => {
@@ -99,6 +107,10 @@ function PortalAttendance() {
   );
 
   const handleFinalizeAttendance = async () => {
+    setFinalizeSuccess('');
+    setFinalizeError('');
+    setLoading(true);
+
     try {
       const baseURL = import.meta.env.VITE_API_BASE_URL
       const res = await fetch(`${baseURL}/finalize-attendance`, {
@@ -110,10 +122,12 @@ function PortalAttendance() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Error finalizing attendance');
 
-      alert('Attendance finalized successfully');
+      setFinalizeSuccess('Attendance finalized successfully');
       setPendingAttendance([]);
     } catch (error) {
-      alert(`Error finalizing attendance: ${error.message}`);
+      setFinalizeError(`Error finalizing attendance: ${error.message}`);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -248,6 +262,25 @@ function PortalAttendance() {
           </div>
         ))}
 
+        {rosterLoading && (
+            <div className="flex items-center justify-center py-12">
+                <div className="flex items-center space-x-3">
+                    <div className="w-6 h-6 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+                    <span className="text-lg font-medium text-emerald-600">Loading roster...</span>
+                </div>
+            </div>
+        )}
+        {rosterError && (
+            <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-4">
+                <div className="flex items-center">
+                    <svg className="w-5 h-5 text-red-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                    <p className="text-red-600 text-sm font-medium">{rosterError}</p>
+                </div>
+            </div>
+        )}
+
         {/* Finalize Attendance */}
         <div className="mt-6 flex justify-end">
           <button
@@ -259,8 +292,19 @@ function PortalAttendance() {
                 : 'bg-emerald-600 hover:bg-emerald-700 text-white'
             }`}
           >
-            {alreadyFinalized ? 'Attendance Already Finalized' : 'Finalize Attendance'}
+            {alreadyFinalized ? 'Attendance Already Finalized' : loading ? 'Finalizing Attendance...' : 'Finalize Attendance'}
           </button>
+          {/* Status Messages */}
+          {finalizeSuccess && (
+            <div className='text-sm px-2 py-2 rounded max-w-md text-green-600'>
+              {finalizeSuccess}
+            </div>
+          )}
+          {finalizeError && (
+            <div className='text-sm px-2 py-2 rounded max-w-md text-red-500'>
+              {finalizeError}
+            </div>
+          )}
         </div>
       </div>
     </section>

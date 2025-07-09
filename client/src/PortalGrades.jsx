@@ -11,6 +11,7 @@ function PortalGrades() {
     const [updateStatus, setUpdateStatus] = useState({});
     const [updateCommentStatus, setUpdateCommentStatus] = useState({});
     const [roster, setRoster] = useState([]);
+    const [rosterLoading, setRosterLoading] = useState(false);
     const [rosterError, setRosterError] = useState('');
     const [filteredData, setFilteredData] = useState([]);
     const [expandedStudents, setExpandedStudents] = useState(new Set());
@@ -190,6 +191,7 @@ function PortalGrades() {
     }
 
     const handleGetRoster = async () => {
+        setRosterLoading(true);
         setRosterError('');
 
         try {
@@ -214,6 +216,8 @@ function PortalGrades() {
             }
         } catch (e) {
             setRosterError('Failed to retrieve roster. Reload the page to try again.');
+        } finally {
+            setRosterLoading(false);
         }
     }
 
@@ -526,13 +530,26 @@ function PortalGrades() {
                     </div>
                 )}
 
+                {rosterLoading && (
+                    <div className="flex items-center justify-center py-12">
+                        <div className="flex items-center space-x-3">
+                            <div className="w-6 h-6 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+                            <span className="text-lg font-medium text-emerald-600">Loading roster...</span>
+                        </div>
+                    </div>
+                )}
                 {rosterError && (
-                    <div className="bg-red-50 border border-red-200 rounded-md p-3">
-                        <p className="text-red-600 text-sm">{rosterError}</p>
+                    <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-4">
+                        <div className="flex items-center">
+                            <svg className="w-5 h-5 text-red-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                            </svg>
+                            <p className="text-red-600 text-sm font-medium">{rosterError}</p>
+                        </div>
                     </div>
                 )}
 
-                {!rosterError && isAdmin && (
+                {!rosterError && !rosterLoading && isAdmin && (
                     <div className="flex flex-col items-end gap-4 mt-6">
                         <button
                             className={`px-6 py-3 font-medium rounded-md transition duration-200 ${
