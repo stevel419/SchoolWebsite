@@ -820,27 +820,33 @@ router.post('/finalize-attendance', authenticateJWT, async (req, res) => {
     for (const [studentId, subjectsMissed] of missedSubjectMap.entries()) {
       const student = await Student.findById(studentId);
       if (!student) continue;
-
+    
       if (!student.classesMissed || typeof student.classesMissed !== 'object') {
         student.classesMissed = {};
       }
-      for (const subject of Object.keys(missedSubjectMap)) {
+    
+      // Update per-subject missed counts
+      for (const subject of Object.keys(subjectsMissed)) {
         student.classesMissed[subject] = (student.classesMissed[subject] || 0) + 1;
       }
-
+    
+      // Only increment daysMissed ONCE if student missed ALL finalized classes for the day
       const todaysAttendance = await Attendance.find({
         student: student._id,
         date: { $gte: todayStart, $lte: todayEnd },
         finalized: true
       });
-
+    
       const missedAll = todaysAttendance.length > 0 && todaysAttendance.every(a => !a.attended);
-      if (missedAll) {
+    
+      if (missedAll && !student.lastMissedDate?.startsWith(todayStart.toISOString().slice(0, 10))) {
         student.daysMissed = (student.daysMissed || 0) + 1;
+        student.lastMissedDate = new Date(); // optional: track last date missed to prevent double-counting
       }
-
+    
       await student.save();
     }
+  
 
     res.status(200).json({ message: "Attendance finalized and saved." });
 
