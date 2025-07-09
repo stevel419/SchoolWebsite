@@ -10,7 +10,7 @@ const PortalStudentForm = ({ mode = 'add', student = {}, onDeleteSuccess }) => {
     const [religion, setReligion] = useState(student.religion || '');
     const [form, setForm] = useState(student.form || '');
     const [subjects, setSubjects] = useState(student.subjects || ['']);
-    const [status, setStatus] = useState(student.isActive || '');
+    const [status, setStatus] = useState(student.status || '');
     const [tuitionOwed, setTuitionOwed] = useState(student.tuitionOwed || '');
     const [gName, setGName] = useState(student.guardian?.name || '');
     const [gNumber, setGNumber] = useState(student.guardian?.phone || '');
