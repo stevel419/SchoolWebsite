@@ -292,17 +292,21 @@ function PortalAttendance() {
                 : 'bg-emerald-600 hover:bg-emerald-700 text-white'
             }`}
           >
-            {alreadyFinalized ? 'Attendance Already Finalized' : loading ? 'Finalizing Attendance...' : 'Finalize Attendance'}
+            {alreadyFinalized
+              ? 'Attendance Already Finalized'
+              : loading
+              ? 'Finalizing Attendance...'
+              : 'Finalize Attendance'}
           </button>
-          {/* Status Messages */}
-          {finalizeSuccess && (
-            <div className='text-sm px-2 py-2 rounded max-w-md text-green-600'>
-              {finalizeSuccess}
-            </div>
-          )}
-          {finalizeError && (
-            <div className='text-sm px-2 py-2 rounded max-w-md text-red-500'>
-              {finalizeError}
+
+          {/* Status message */}
+          {(finalizeSuccess || finalizeError) && (
+            <div
+              className={`text-sm px-2 py-2 rounded max-w-md ${
+                finalizeSuccess ? 'text-green-600' : 'text-red-500'
+              }`}
+            >
+              {finalizeSuccess || finalizeError.replace('Error finalizing attendance: ', '')}
             </div>
           )}
         </div>
