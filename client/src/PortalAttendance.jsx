@@ -31,7 +31,7 @@ function PortalAttendance() {
     })
       .then(res => res.json())
       .then(data => {
-        const activeStudents = data.filter(student => student.isActive);
+        const activeStudents = data.filter(student => student.status === 'Active');
         setRoster(activeStudents);
         setFiltered(activeStudents);
       })

@@ -208,7 +208,7 @@ function PortalGrades() {
 
             const data = await res.json();
             if (res.ok) {
-                const activeStudents = data.filter(student => student.isActive);
+                const activeStudents = data.filter(student => student.status === 'Active');
                 setRoster(activeStudents);
                 setFilteredData(activeStudents);
             } else {
