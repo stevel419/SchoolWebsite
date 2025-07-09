@@ -5,7 +5,7 @@ function AboutHome() {
         <div className="grid lg:grid-cols-2 grid-cols-1 gap-4 bg-white place-content-center px-10 pt-15 pb-20 shadow-xl">
             <div className="lg:col-span-2 col-span-1 p-4 text-black text-center">
                 <h2 className="font-sans text-3xl font-bold text-black uppercase pb-8">About Kiguruyembe Secondari</h2>
-                <p className="pb-4 text-lg">
+                <p className="pb-4 text-lg text-left">
                 Kigurunyembe Secondary School, located in Morogoro, owned by the Catholic Diocese of Morogoro, 
                 Tanzania, traces its roots back to 1974. The inception of the school was inspired by the late 
                 Fr. J. Franken, who at the time was the Principal of Kigurunyembe Teachers College, currently known 
