@@ -36,7 +36,7 @@ function PortalAttendance() {
         setFiltered(activeStudents);
       })
       .catch(err => setRosterError('Failed to retrieve roster. Reload the page to try again.' || err))
-      .finally(setRosterLoading(false));
+      .finally(() => setRosterLoading(false));
   }, []);
 
   const toggleStudentExpansion = admissionNum => {

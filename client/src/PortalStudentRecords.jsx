@@ -216,7 +216,7 @@ function PortalStudentRecords() {
                             onChange={(e) => setFilterStatus(e.target.value)}
                             className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                         >
-                            <option value="">Sort by Status</option>
+                            <option value="">All Status</option>
                             <option value="Active">Active</option>
                             <option value="Inactive">Inactive</option>
                             <option value="Graduated">Graduated</option>
