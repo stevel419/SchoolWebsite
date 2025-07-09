@@ -58,7 +58,8 @@ const PortalStudentForm = ({ mode = 'add', student = {}, onDeleteSuccess }) => {
                 address, 
                 form: Number(form), 
                 subjects: subjects.filter(subject => subject.trim() !== ''),
-                isActive
+                isActive,
+                isEditMode: mode === 'edit'
             };
             const baseURL = import.meta.env.VITE_API_BASE_URL
             const token = sessionStorage.getItem('token');

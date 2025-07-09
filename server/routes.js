@@ -261,9 +261,15 @@ router.post('/save-student', authenticateJWT, async (req, res) => {
             return res.status(403).json({ error: "Only admin can save or update student" });
         }
 
-        const { admissionNum, firstName, lastName, dateOfBirth, gender, religion, guardian, address, form, subjects, isActive } = req.body;
+        const { admissionNum, firstName, lastName, dateOfBirth, gender, religion, guardian, address, form, subjects, isActive, isEditMode } = req.body;
 
         const student = await Student.findOne({ admissionNum }).session(session);
+
+        if (!isEditMode && student) {
+            await session.abortTransaction();
+            return res.status(400).json({ error: "Duplicate admission number, student already exists" });
+        }
+
         const studentExists = !!student;
 
         // Create new student if they don't exist
@@ -872,7 +878,6 @@ router.post('/save-reports', async (req, res) => {
   try {
     const browser = await puppeteer.launch({
       headless: 'new',
-      executablePath: '/opt/render/.cache/puppeteer/chrome/linux-138.0.7204.92/chrome',
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
     const uploadPromises = Object.entries(reportDict).map(async ([reportKey, html]) => {

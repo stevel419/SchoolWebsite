@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import StudentForm from './PortalStudentForm.jsx';
 
 function PortalStudentRecords() {
@@ -6,8 +6,13 @@ function PortalStudentRecords() {
     const [openForm, setOpenForm] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const [studentData, setStudentData] = useState([]);
     const [expandedStudentIds, setExpandedStudentIds] = useState([]);
+    const [roster, setRoster] = useState([]);
+    const [rosterLoading, setRosterLoading] = useState(false);
+    const [rosterError, setRosterError] = useState('');
+    const [filteredData, setFilteredData] = useState([]);
+    const [filterForm, setFilterForm] = useState('');
+    const [sortBy, setSortBy] = useState('name');
 
     const toggleStudentDetails = (id) => {
         setExpandedStudentIds(prev =>
@@ -16,20 +21,69 @@ function PortalStudentRecords() {
     };
 
     const removeStudentFromList = (deletedAdmissionNum) => {
-        setStudentData(prev => prev.filter(student => student.admissionNum !== deletedAdmissionNum));
+        setFilteredData(prev => prev.filter(student => student.admissionNum !== deletedAdmissionNum));
         setExpandedStudentIds(prev => prev.filter(id => id !== deletedAdmissionNum));
     };
 
     const handleSearchStudent = async (e) => {
-        e.preventDefault();
+        if (e) {
+            e.preventDefault();
+        }
         setLoading(true);
         setError('');
+
+        const term = name.trim().toLowerCase();
+        
+        if (!term) {
+            setFilteredData(roster);
+            setLoading(false);
+            return;
+        }
+
+        const nameParts = term.split(/\s+/);
+        let result = [];
+
+        if (nameParts.length === 1) {
+            const partial = nameParts[0];
+            result = roster.filter(student =>
+                student.firstName.toLowerCase().includes(partial) ||
+                student.lastName.toLowerCase().includes(partial)
+            );
+        } else {
+            const first = nameParts[0];
+            const last = nameParts.slice(1).join(' ');
+
+            result = roster.filter(student => {
+                const studentFirst = student.firstName.toLowerCase();
+                const studentLast = student.lastName.toLowerCase();
+
+                return (
+                    (studentFirst.includes(first) && studentLast.includes(last)) ||
+                    (studentFirst.includes(last) && studentLast.includes(first))
+                );
+            });
+        }
+
+        setFilteredData(result);
+        
+        if (result.length === 0 && term) {
+            setError('No matching students found');
+        } else {
+            setError('');
+        }
+        
+        setLoading(false);
+    }
+
+    const handleGetRoster = async () => {
+        setRosterLoading(true);
+        setRosterError('');
 
         try {
             const baseURL = import.meta.env.VITE_API_BASE_URL
             const token = sessionStorage.getItem('token');
 
-            const res = await fetch(`${baseURL}/search-students?name=${encodeURIComponent(name)}`, {
+            const res = await fetch(`${baseURL}/get-students`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -39,17 +93,50 @@ function PortalStudentRecords() {
 
             const data = await res.json();
             if (res.ok) {
-                setStudentData(data);
-                setName('');
+                setRoster(data);
+                setFilteredData(data);
             } else {
-                setError(data.error || 'Cannot find matching students');
+                setRosterError(data.error || 'Cannot retrieve roster');
             }
         } catch (e) {
-            setError('Failed to search student. Please try again.');
+            setRosterError('Failed to retrieve roster. Reload the page to try again.');
         } finally {
-            setLoading(false);
+            setRosterLoading(false);
         }
     }
+
+    useEffect(() => {
+        handleGetRoster();
+    }, []);
+
+    const getFilteredAndSortedRoster = () => {
+        let filtered = filteredData;
+        
+        if (filterForm) {
+            filtered = filtered.filter(student => student.form === Number(filterForm));
+        }
+        //if (sortSubject) {
+        //    filtered = filtered.filter(student => Array.isArray(student.subjects) && student.subjects.includes(sortSubject));
+        //}
+        
+        return filtered.sort((a, b) => {
+            switch (sortBy) {
+                case 'name':
+                    return `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`);
+                case 'form':
+                    return a.form - b.form;
+                case 'dateOfBirth':
+                    return new Date(a.dateOfBirth) - new Date(b.dateOfBirth);
+                default:
+                    return 0;
+            }
+        });
+    };
+
+    const uniqueForms = [...new Set(roster.map(student => student.form))].sort();
+    const filteredRoster = getFilteredAndSortedRoster();
+
+    useEffect(() => {}, [sortBy]);
 
     return (
         <section className="pt-40 pb-20 px-4 max-w-6xl mx-auto">
@@ -57,6 +144,7 @@ function PortalStudentRecords() {
                 <h1 className="text-3xl font-bold text-gray-800 mb-2">Student Records</h1>
                 <p className="text-gray-600">Search for existing students or add new ones to the system</p>
             </div>
+            {/* Search Student */}
             <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
                 <h2 className="text-2xl font-semibold text-gray-800 mb-4">Search Student</h2>
                 <form onSubmit={handleSearchStudent} className="flex flex-col sm:flex-row gap-4">
@@ -83,13 +171,62 @@ function PortalStudentRecords() {
                         {loading ? 'Searching Student...' : 'Search Student'}
                     </button>
                 </form>
-                {/* Student Info */}
-                {studentData.length > 0 && (
-                    <div className="mt-6 space-y-4">
-                        {studentData.map(student => {
+            </div>
+            {/* Add New Student */}
+            <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+                <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-2xl font-semibold text-gray-800">Add New Student</h2>
+                    <button 
+                        onClick={() => setOpenForm((prev) => !prev)}
+                        className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                    >
+                        <span>{openForm ? 'Hide Form' : 'Add Student'}</span>
+                        <span className={`text-lg font-bold transition-transform duration-200 ${openForm ? 'rotate-45' : ''}`}>
+                            +
+                        </span>
+                    </button>
+                </div>
+                <div className={`transition-all duration-300 ease-in-out ${
+                    openForm ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'
+                }`}>
+                    {openForm && <StudentForm mode="add" />}
+                </div>
+            </div>
+            {/* Roster */}
+            <div className="bg-white rounded-lg shadow-lg p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                    <h2 className="text-2xl font-semibold text-gray-800">Roster ({filteredRoster.length} students)</h2>
+                    {/* Filter and Sort Controls */}
+                    <div className="flex flex-col md:flex-row gap-3">
+                        <select
+                            value={filterForm}
+                            onChange={(e) => setFilterForm(e.target.value)}
+                            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                        >
+                            <option value="">All Forms</option>
+                            {uniqueForms.map(form => (
+                                <option key={form} value={form}>Form {form}</option>
+                            ))}
+                        </select>
+                        
+                        <select
+                            value={sortBy}
+                            onChange={(e) => setSortBy(e.target.value)}
+                            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                        >
+                            <option value="name">Sort by Name</option>
+                            <option value="form">Sort by Form</option>
+                            <option value="dateOfBirth">Sort by Age</option>
+                        </select>
+                    </div>
+                </div>
+
+                {filteredRoster.length > 0 && (
+                    <div className="space-y-3">
+                        {filteredRoster.map((student, studentIdx) => {
                             const isOpen = expandedStudentIds.includes(student._id);
                             return (
-                                <div key={student._id} className="border rounded-lg shadow-sm p-4">
+                                <div key={studentIdx} className="border rounded-lg shadow-sm p-4">
                                     <div className="flex justify-between items-center">
                                         <div>
                                             <p className="font-semibold text-lg">{student.firstName} {student.lastName}</p>
@@ -172,25 +309,25 @@ function PortalStudentRecords() {
                         })}
                     </div>
                 )}
-            </div>
-            <div className="bg-white rounded-lg shadow-lg p-6">
-                <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-2xl font-semibold text-gray-800">Add New Student</h2>
-                    <button 
-                        onClick={() => setOpenForm((prev) => !prev)}
-                        className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
-                    >
-                        <span>{openForm ? 'Hide Form' : 'Add Student'}</span>
-                        <span className={`text-lg font-bold transition-transform duration-200 ${openForm ? 'rotate-45' : ''}`}>
-                            +
-                        </span>
-                    </button>
-                </div>
-                <div className={`transition-all duration-300 ease-in-out ${
-                    openForm ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'
-                }`}>
-                    {openForm && <StudentForm mode="add" />}
-                </div>
+
+                {rosterLoading && (
+                    <div className="flex items-center justify-center py-12">
+                        <div className="flex items-center space-x-3">
+                            <div className="w-6 h-6 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+                            <span className="text-lg font-medium text-emerald-600">Loading roster...</span>
+                        </div>
+                    </div>
+                )}
+                {rosterError && (
+                    <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-4">
+                        <div className="flex items-center">
+                            <svg className="w-5 h-5 text-red-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                            </svg>
+                            <p className="text-red-600 text-sm font-medium">{rosterError}</p>
+                        </div>
+                    </div>
+                )}
             </div>
         </section>
     );
