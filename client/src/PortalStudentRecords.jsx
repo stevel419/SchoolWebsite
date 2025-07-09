@@ -12,6 +12,7 @@ function PortalStudentRecords() {
     const [rosterError, setRosterError] = useState('');
     const [filteredData, setFilteredData] = useState([]);
     const [filterForm, setFilterForm] = useState('');
+    const [filterStatus, setFilterStatus] = useState('');
     const [sortBy, setSortBy] = useState('name');
 
     const toggleStudentDetails = (id) => {
@@ -115,9 +116,9 @@ function PortalStudentRecords() {
         if (filterForm) {
             filtered = filtered.filter(student => student.form === Number(filterForm));
         }
-        //if (sortSubject) {
-        //    filtered = filtered.filter(student => Array.isArray(student.subjects) && student.subjects.includes(sortSubject));
-        //}
+        if (filterStatus) {
+            filtered = filtered.filter(student => student.status === filterStatus);
+        }
         
         return filtered.sort((a, b) => {
             switch (sortBy) {
@@ -207,6 +208,17 @@ function PortalStudentRecords() {
                             {uniqueForms.map(form => (
                                 <option key={form} value={form}>Form {form}</option>
                             ))}
+                        </select>
+
+                        <select
+                            value={filterStatus}
+                            onChange={(e) => setFilterStatus(e.target.value)}
+                            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                        >
+                            <option value="">Sort by Status</option>
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
+                            <option value="Graduated">Graduated</option>
                         </select>
                         
                         <select
