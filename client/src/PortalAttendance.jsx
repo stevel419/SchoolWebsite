@@ -263,53 +263,55 @@ function PortalAttendance() {
         ))}
 
         {rosterLoading && (
-            <div className="flex items-center justify-center py-12">
-                <div className="flex items-center space-x-3">
-                    <div className="w-6 h-6 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-                    <span className="text-lg font-medium text-emerald-600">Loading roster...</span>
-                </div>
+          <div className="flex items-center justify-center py-12">
+            <div className="flex items-center space-x-3">
+              <div className="w-6 h-6 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+              <span className="text-lg font-medium text-emerald-600">Loading roster...</span>
             </div>
+          </div>
         )}
         {rosterError && (
-            <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-4">
-                <div className="flex items-center">
-                    <svg className="w-5 h-5 text-red-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                    </svg>
-                    <p className="text-red-600 text-sm font-medium">{rosterError}</p>
-                </div>
+          <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-4">
+            <div className="flex items-center">
+              <svg className="w-5 h-5 text-red-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+              <p className="text-red-600 text-sm font-medium">{rosterError}</p>
             </div>
+          </div>
         )}
 
         {/* Finalize Attendance */}
-        <div className="flex flex-col items-end gap-4 mt-6">
-          <button
-            onClick={handleFinalizeAttendance}
-            disabled={!allSelected || alreadyFinalized}
-            className={`px-6 py-3 font-medium rounded-md transition ${
-              !allSelected || alreadyFinalized
-                ? 'bg-gray-400 cursor-not-allowed text-white'
-                : 'bg-emerald-600 hover:bg-emerald-700 text-white'
-            }`}
-          >
-            {alreadyFinalized
-              ? 'Attendance Already Finalized'
-              : loading
-              ? 'Finalizing Attendance...'
-              : 'Finalize Attendance'}
-          </button>
-
-          {/* Status message */}
-          {(finalizeSuccess || finalizeError) && (
-            <div
-              className={`text-sm px-2 py-2 rounded max-w-md ${
-                finalizeSuccess ? 'text-green-600' : 'text-red-500'
+        {!rosterLoading && !rosterError && (
+          <div className="flex flex-col items-end gap-4 mt-6">
+            <button
+              onClick={handleFinalizeAttendance}
+              disabled={!allSelected || alreadyFinalized}
+              className={`px-6 py-3 font-medium rounded-md transition ${
+                !allSelected || alreadyFinalized
+                  ? 'bg-gray-400 cursor-not-allowed text-white'
+                  : 'bg-emerald-600 hover:bg-emerald-700 text-white'
               }`}
             >
-              {finalizeSuccess || finalizeError.replace('Error finalizing attendance: ', '')}
-            </div>
-          )}
-        </div>
+              {alreadyFinalized
+                ? 'Attendance Already Finalized'
+                : loading
+                ? 'Finalizing Attendance...'
+                : 'Finalize Attendance'}
+            </button>
+
+            {/* Status message */}
+            {(finalizeSuccess || finalizeError) && (
+              <div
+                className={`text-sm px-2 py-2 rounded max-w-md ${
+                  finalizeSuccess ? 'text-green-600' : 'text-red-500'
+                }`}
+              >
+                {finalizeSuccess || finalizeError.replace('Error finalizing attendance: ', '')}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </section>
   );
