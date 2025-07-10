@@ -142,9 +142,9 @@ function UpdateWebsite() {
             onChange={e => setPasswordInput(e.target.value)}
           />
           {error && (
-            <p className="text-red-500 text-sm my-2">{error}</p>
+            <p className="text-red-500 text-sm mb-2">{error}</p>
           )}
-          <button className="bg-emerald-600 text-white w-full p-2 rounded">
+          <button className="bg-emerald-600 text-white w-full p-2 rounded-md flex items-center justify-center">
             {loading ? (<div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>) : 'Login'}
           </button>
         </form>
