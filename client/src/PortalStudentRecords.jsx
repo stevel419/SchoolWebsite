@@ -254,7 +254,7 @@ function PortalStudentRecords() {
                                     <div className="flex justify-between items-center">
                                         <div>
                                             <p className="font-semibold text-lg">{student.firstName} {student.lastName}</p>
-                                            <p className="text-sm text-gray-600">Form: {student.form}</p>
+                                            <p className="text-sm text-gray-600">Admission Number: {student.admissionNum}</p>
                                         </div>
                                         <button
                                             onClick={() => toggleStudentDetails(student._id)}
