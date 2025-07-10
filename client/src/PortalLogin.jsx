@@ -9,6 +9,7 @@ function PortalLogin() {
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
     const togglePassword = () => {
@@ -38,11 +39,14 @@ function PortalLogin() {
     async function handleLogin(e) {
         e.preventDefault();
         setError('');
+        setLoading(true);
 
         try {
             await login(username, password);
         } catch (e) {
             setError('Login failed: ' + e.message);
+        } finally {
+            setLoading(false);
         }
     }
 
@@ -106,7 +110,7 @@ function PortalLogin() {
                         onClick={handleLogin}
                         className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-md shadow-md transition"
                         >
-                            Login
+                            {loading ? (<div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>) : 'Login'}
                         </button>
                     </div>
                     <div className="flex justify-center items-center">

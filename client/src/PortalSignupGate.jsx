@@ -7,6 +7,7 @@ function PortalSignupGate() {
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
     const togglePassword = () => {
@@ -16,6 +17,7 @@ function PortalSignupGate() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
+        setLoading(true);
         
         const baseURL = import.meta.env.VITE_API_BASE_URL
         const res = await fetch(`${baseURL}/check-password`, {
@@ -30,6 +32,7 @@ function PortalSignupGate() {
         else {
             setError('Incorrect password');
         }
+        setLoading(false);
     }
 
     return (
@@ -71,7 +74,7 @@ function PortalSignupGate() {
                         type="submit"
                         className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-3 px-4 rounded-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
                     >
-                        Access Sign Up
+                        {loading ? (<div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>) : 'Access Sign Up'}
                     </button>
                 </form>
                 <div className="mt-6 text-center">

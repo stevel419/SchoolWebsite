@@ -5,6 +5,8 @@ function UpdateWebsite() {
   const [staff, setStaff] = useState([]);
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const [slideText, setSlideText] = useState('');
   const [slideImage, setSlideImage] = useState(null);
@@ -35,13 +37,16 @@ function UpdateWebsite() {
   const checkPassword = async (e) => {
     const baseURL = import.meta.env.VITE_API_BASE_URL
     e.preventDefault();
+    setLoading(true);
+    setError('');
     const res = await fetch(`${baseURL}/check-password`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ password: passwordInput })
     });
     if (res.ok) setIsAuthorized(true);
-    else alert('Incorrect password');
+    else setError('Incorrect password');
+    setLoading(false);
   };
 
   const handleAddSlide = async (e) => {
@@ -136,7 +141,12 @@ function UpdateWebsite() {
             value={passwordInput}
             onChange={e => setPasswordInput(e.target.value)}
           />
-          <button className="bg-emerald-600 text-white w-full p-2 rounded">Login</button>
+          {error && (
+            <p className="text-red-500 text-sm my-2">{error}</p>
+          )}
+          <button className="bg-emerald-600 text-white w-full p-2 rounded">
+            {loading ? (<div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>) : 'Login'}
+          </button>
         </form>
       </div>
     );
