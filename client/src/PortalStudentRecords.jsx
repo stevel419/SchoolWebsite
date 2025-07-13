@@ -13,6 +13,7 @@ function PortalStudentRecords() {
     const [filteredData, setFilteredData] = useState([]);
     const [filterForm, setFilterForm] = useState('');
     const [filterStatus, setFilterStatus] = useState('');
+    const [filterPayment, setFilterPayment] = useState('');
     const [sortBy, setSortBy] = useState('name');
 
     const toggleStudentDetails = (id) => {
@@ -119,6 +120,13 @@ function PortalStudentRecords() {
         if (filterStatus) {
             filtered = filtered.filter(student => student.status === filterStatus);
         }
+        if (filterPayment) {
+            if (filterPayment === 'outstanding') {
+                filtered = filtered.filter(student => student.tuitionOwed > 0);
+            } else {
+                filtered = filtered.filter(student => student.tuitionOwed === 0);
+            }
+        }
         
         return filtered.sort((a, b) => {
             switch (sortBy) {
@@ -220,6 +228,16 @@ function PortalStudentRecords() {
                             <option value="Active">Active</option>
                             <option value="Inactive">Inactive</option>
                             <option value="Graduated">Graduated</option>
+                        </select>
+
+                        <select
+                            value={filterPayment}
+                            onChange={(e) => setFilterPayment(e.target.value)}
+                            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                        >
+                            <option value="">All Payment Status</option>
+                            <option value="outstanding">Outstanding Charges</option>
+                            <option value="paid">Paid in Full</option>
                         </select>
                         
                         <select
