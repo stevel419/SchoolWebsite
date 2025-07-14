@@ -23,6 +23,11 @@ function PortalGrades() {
     const [saveAllStatus, setSaveAllStatus] = useState('');
     const [savingStates, setSavingStates] = useState({});
     const [isAdmin, setIsAdmin] = useState(false);
+    
+    // Pagination states
+    const [currentPage, setCurrentPage] = useState(1);
+    const [studentsPerPage] = useState(10);
+    
     const token = sessionStorage.getItem('token');
 
     const handleSavePdf = async (idx) => {
@@ -136,7 +141,9 @@ function PortalGrades() {
     const studentRefs = useRef([]);
 
     const handleStudentPrint = (idx) => {
-        const student = filteredData[idx];
+        const filteredRoster = getFilteredAndSortedRoster();
+        const paginatedRoster = getPaginatedRoster(filteredRoster);
+        const student = paginatedRoster[idx];
         handlePrint(student, calculateSubjectAverage);
     };
 
@@ -146,6 +153,7 @@ function PortalGrades() {
         }
         setLoading(true);
         setError('');
+        setCurrentPage(1); // Reset to first page when searching
 
         const term = name.trim().toLowerCase();
         
@@ -338,9 +346,33 @@ function PortalGrades() {
         });
     };
 
+    // Pagination helper functions
+    const getPaginatedRoster = (filteredRoster) => {
+        const startIndex = (currentPage - 1) * studentsPerPage;
+        const endIndex = startIndex + studentsPerPage;
+        return filteredRoster.slice(startIndex, endIndex);
+    };
+
+    const getTotalPages = (filteredRoster) => {
+        return Math.ceil(filteredRoster.length / studentsPerPage);
+    };
+
+    const handlePageChange = (page) => {
+        setCurrentPage(page);
+        // Clear expanded students when changing pages to avoid confusion
+        setExpandedStudents(new Set());
+    };
+
     const uniqueForms = [...new Set(roster.map(student => student.form))].sort();
     const allSubjects = getAllSubjects();
     const filteredRoster = getFilteredAndSortedRoster();
+    const paginatedRoster = getPaginatedRoster(filteredRoster);
+    const totalPages = getTotalPages(filteredRoster);
+
+    // Reset to first page when filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [filterForm, sortBy, sortSubject, sortOrder]);
 
     useEffect(() => {
         if (sortBy !== 'subjectGrades') {
@@ -348,6 +380,95 @@ function PortalGrades() {
             setSortOrder('desc');
         }
     }, [sortBy]);
+
+    // Pagination component
+    const PaginationControls = () => {
+        if (totalPages <= 1) return null;
+
+        const getPageNumbers = () => {
+            const pages = [];
+            const maxVisiblePages = 5;
+            
+            if (totalPages <= maxVisiblePages) {
+                for (let i = 1; i <= totalPages; i++) {
+                    pages.push(i);
+                }
+            } else {
+                if (currentPage <= 3) {
+                    for (let i = 1; i <= 4; i++) {
+                        pages.push(i);
+                    }
+                    pages.push('...');
+                    pages.push(totalPages);
+                } else if (currentPage >= totalPages - 2) {
+                    pages.push(1);
+                    pages.push('...');
+                    for (let i = totalPages - 3; i <= totalPages; i++) {
+                        pages.push(i);
+                    }
+                } else {
+                    pages.push(1);
+                    pages.push('...');
+                    for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+                        pages.push(i);
+                    }
+                    pages.push('...');
+                    pages.push(totalPages);
+                }
+            }
+            return pages;
+        };
+
+        return (
+            <div className="flex items-center justify-between mt-6 px-4">
+                <div className="text-sm text-gray-600">
+                    Showing {(currentPage - 1) * studentsPerPage + 1} to {Math.min(currentPage * studentsPerPage, filteredRoster.length)} of {filteredRoster.length} students
+                </div>
+                <div className="flex items-center space-x-2">
+                    <button
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        className={`px-3 py-1 rounded-md text-sm font-medium ${
+                            currentPage === 1
+                                ? 'text-gray-400 cursor-not-allowed'
+                                : 'text-emerald-600 hover:bg-emerald-50'
+                        }`}
+                    >
+                        Previous
+                    </button>
+                    
+                    {getPageNumbers().map((page, index) => (
+                        <button
+                            key={index}
+                            onClick={() => typeof page === 'number' && handlePageChange(page)}
+                            disabled={page === '...'}
+                            className={`px-3 py-1 rounded-md text-sm font-medium ${
+                                page === currentPage
+                                    ? 'bg-emerald-600 text-white'
+                                    : page === '...'
+                                    ? 'text-gray-400 cursor-default'
+                                    : 'text-gray-600 hover:bg-emerald-50'
+                            }`}
+                        >
+                            {page}
+                        </button>
+                    ))}
+                    
+                    <button
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        className={`px-3 py-1 rounded-md text-sm font-medium ${
+                            currentPage === totalPages
+                                ? 'text-gray-400 cursor-not-allowed'
+                                : 'text-emerald-600 hover:bg-emerald-50'
+                        }`}
+                    >
+                        Next
+                    </button>
+                </div>
+            </div>
+        );
+    };
 
     return (
         <section className="pt-40 pb-20 px-4 max-w-6xl mx-auto">
@@ -435,9 +556,9 @@ function PortalGrades() {
                     </div>
                 </div>
 
-                {filteredRoster.length > 0 && (
+                {paginatedRoster.length > 0 && (
                     <div className="space-y-3">
-                        {filteredRoster.map((student, studentIdx) => (
+                        {paginatedRoster.map((student, studentIdx) => (
                             <div key={studentIdx} ref={el => studentRefs.current[studentIdx] = el} className="border rounded-lg shadow-sm">
                                 {/* Student Basic Info */}
                                 <div 
@@ -529,6 +650,9 @@ function PortalGrades() {
                         ))}
                     </div>
                 )}
+
+                {/* Pagination Controls */}
+                <PaginationControls />
 
                 {rosterLoading && (
                     <div className="flex items-center justify-center py-12">
