@@ -214,7 +214,7 @@ function PortalSignup() {
                                     </button>
                                 ) : (
                                     <div className="px-4 py-2 text-sm text-gray-400 bg-gray-100 rounded-md border border-gray-200 whitespace-nowrap">
-                                        Already deactivated
+                                        Deactivated
                                     </div>
                                 )}
                             </div>
