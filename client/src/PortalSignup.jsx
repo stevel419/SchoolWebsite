@@ -165,32 +165,59 @@ function PortalSignup() {
         return (
             <div className="space-y-4">
                 {teachers.map(teacher => (
-                    <div key={teacher._id} className="p-4 border rounded flex justify-between items-center">
-                        <div>
-                            <p className="font-medium">{teacher.firstName} {teacher.lastName}</p>
-                            <p className="text-sm text-gray-600">Subject: {teacher.subject}</p>
-                            <p className="text-sm text-gray-600">Username: {teacher.username}</p>
-                            <p className={`text-sm ${teacher.isActive ? 'text-green-600' : 'text-red-500'}`}>
-                                {teacher.isActive ? 'Active' : 'Deactivated'}
-                            </p>
-                        </div>
-                        <div className="flex gap-2">
-                            <button
-                                onClick={() => handleChangePassword(teacher)}
-                                className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
-                            >
-                                Change Password
-                            </button>
-                            {teacher.isActive ? (
+                    <div key={teacher._id} className="p-4 border rounded-lg shadow-sm bg-white hover:shadow-md transition-shadow">
+                        <div className="flex justify-between items-start gap-4">
+                            <div className="flex-1">
+                                <p className="font-semibold text-gray-800 text-lg">{teacher.firstName} {teacher.lastName}</p>
+                                <div className="mt-2 space-y-1">
+                                    <p className="text-sm text-gray-600">
+                                        <span className="font-medium">Subject:</span> {teacher.subject}
+                                    </p>
+                                    <p className="text-sm text-gray-600">
+                                        <span className="font-medium">Username:</span> {teacher.username}
+                                    </p>
+                                    <div className="flex items-center gap-2 mt-2">
+                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                            teacher.isActive 
+                                                ? 'bg-green-100 text-green-800' 
+                                                : 'bg-red-100 text-red-800'
+                                        }`}>
+                                            {teacher.isActive ? 'Active' : 'Deactivated'}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex flex-col sm:flex-row gap-2 min-w-fit">
                                 <button
-                                    onClick={() => handleDeactivate(teacher._id)}
-                                    className="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600"
+                                    onClick={() => handleChangePassword(teacher)}
+                                    className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200 whitespace-nowrap"
                                 >
-                                    {status[teacher._id] === 'loading' ? 'Processing...' : 'Deactivate'}
+                                    Change Password
                                 </button>
-                            ) : (
-                                <span className="text-sm text-gray-400 italic">Already deactivated</span>
-                            )}
+                                
+                                {teacher.isActive ? (
+                                    <button
+                                        onClick={() => handleDeactivate(teacher._id)}
+                                        disabled={status[teacher._id] === 'loading'}
+                                        className={`px-4 py-2 text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors duration-200 whitespace-nowrap ${
+                                            status[teacher._id] === 'loading'
+                                                ? 'bg-gray-400 text-white cursor-not-allowed'
+                                                : 'bg-red-600 text-white hover:bg-red-700'
+                                        }`}
+                                    >
+                                        {status[teacher._id] === 'loading' ? (
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                                Processing...
+                                            </div>
+                                        ) : 'Deactivate'}
+                                    </button>
+                                ) : (
+                                    <div className="px-4 py-2 text-sm text-gray-400 bg-gray-100 rounded-md border border-gray-200 whitespace-nowrap">
+                                        Already deactivated
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 ))}
