@@ -18,7 +18,7 @@ function PortalStudentRecords() {
     
     // Pagination states
     const [currentPage, setCurrentPage] = useState(1);
-    const [studentsPerPage] = useState(10);
+    const [studentsPerPage, setStudentsPerPage] = useState(10);
 
     const toggleStudentDetails = (id) => {
         setExpandedStudentIds(prev =>
