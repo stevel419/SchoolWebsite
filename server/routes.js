@@ -39,6 +39,34 @@ router.post('/create-user', async (req, res) => {
     }
 });
 
+router.post('/change-password', async (req, res) => {
+  try {
+    const { teacherId, newPassword } = req.body;
+
+    if (!teacherId || !newPassword) {
+      return res.status(400).json({ error: "Teacher ID and new password are required" });
+    }
+
+    // Find the teacher
+    const teacher = await Teacher.findById(teacherId);
+    if (!teacher) {
+      return res.status(404).json({ error: "Teacher not found" });
+    }
+
+    // Hash the new password
+    const salt = await bcrypt.genSalt();
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    // Update the password
+    await Teacher.findByIdAndUpdate(teacherId, { password: hashedPassword });
+
+    res.status(200).json({ message: "Password changed successfully" });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Failed to change password" });
+  }
+});
+
 router.post('/login', async (req, res) => {
     try {
         const { username, password } = req.body;

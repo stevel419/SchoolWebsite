@@ -60,82 +60,197 @@ function PortalSignup() {
     function TeacherList() {
         const [teachers, setTeachers] = useState([]);
         const [status, setStatus] = useState({});
-      
-        useEffect(() => {
-          const fetchTeachers = async () => {
-            try {
-              const baseURL = import.meta.env.VITE_API_BASE_URL
-            
-              const res = await fetch(`${baseURL}/get-teachers`);
-              const data = await res.json();
-              if (res.ok) setTeachers(data);
-            } catch (err) {
-              console.error("Failed to fetch teachers:", err);
-            }
-          };
-          fetchTeachers();
-        }, []);
-      
-        const handleDeactivate = async (teacherId) => {
-          if (!window.confirm("Are you sure you want to deactivate this teacher?")) return;
-          try {
-            setStatus(prev => ({ ...prev, [teacherId]: 'loading' }));
-            const baseURL = import.meta.env.VITE_API_BASE_URL
+        const [showPasswordModal, setShowPasswordModal] = useState(false);
+        const [selectedTeacher, setSelectedTeacher] = useState(null);
+        const [newPassword, setNewPassword] = useState('');
+        const [showNewPassword, setShowNewPassword] = useState(false);
+        const [passwordChangeLoading, setPasswordChangeLoading] = useState(false);
 
-            const res = await fetch(`${baseURL}/deactivate-teacher`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ teacherId, confirm: true })
-            });
-      
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error || 'Failed');
-      
-            setTeachers(prev =>
-              prev.map(t => t._id === teacherId ? { ...t, isActive: false } : t)
-            );
-            setStatus(prev => ({ ...prev, [teacherId]: 'success' }));
-            setTimeout(() => {
-              setStatus(prev => {
-                const updated = { ...prev };
-                delete updated[teacherId];
-                return updated;
-              });
-            }, 2000);
-          } catch (err) {
-            console.error(err);
-            setStatus(prev => ({ ...prev, [teacherId]: 'error' }));
-          }
+        useEffect(() => {
+            const fetchTeachers = async () => {
+                try {
+                    const baseURL = import.meta.env.VITE_API_BASE_URL
+                    
+                    const res = await fetch(`${baseURL}/get-teachers`);
+                    const data = await res.json();
+                    if (res.ok) setTeachers(data);
+                } catch (err) {
+                    console.error("Failed to fetch teachers:", err);
+                }
+            };
+            fetchTeachers();
+        }, []);
+
+        const handleDeactivate = async (teacherId) => {
+            if (!window.confirm("Are you sure you want to deactivate this teacher?")) return;
+            try {
+                setStatus(prev => ({ ...prev, [teacherId]: 'loading' }));
+                const baseURL = import.meta.env.VITE_API_BASE_URL
+
+                const res = await fetch(`${baseURL}/deactivate-teacher`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ teacherId, confirm: true })
+                });
+
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Failed');
+
+                setTeachers(prev =>
+                    prev.map(t => t._id === teacherId ? { ...t, isActive: false } : t)
+                );
+                setStatus(prev => ({ ...prev, [teacherId]: 'success' }));
+                setTimeout(() => {
+                    setStatus(prev => {
+                        const updated = { ...prev };
+                        delete updated[teacherId];
+                        return updated;
+                    });
+                }, 2000);
+            } catch (err) {
+                console.error(err);
+                setStatus(prev => ({ ...prev, [teacherId]: 'error' }));
+            }
         };
-      
+
+        const handleChangePassword = (teacher) => {
+            setSelectedTeacher(teacher);
+            setNewPassword('');
+            setShowPasswordModal(true);
+        };
+
+        const handlePasswordSubmit = async (e) => {
+            e.preventDefault();
+            if (!newPassword.trim()) return;
+
+            setPasswordChangeLoading(true);
+            try {
+                const baseURL = import.meta.env.VITE_API_BASE_URL;
+                
+                const res = await fetch(`${baseURL}/change-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        teacherId: selectedTeacher._id,
+                        newPassword
+                    })
+                });
+
+                const data = await res.json();
+                if (res.ok) {
+                    setSuccess('Password changed successfully!');
+                    setShowPasswordModal(false);
+                    setNewPassword('');
+                    setSelectedTeacher(null);
+                    setTimeout(() => setSuccess(''), 3000);
+                } else {
+                    setError(data.error || 'Failed to change password');
+                    setTimeout(() => setError(''), 3000);
+                }
+            } catch (err) {
+                setError('Network error. Please try again.');
+                setTimeout(() => setError(''), 3000);
+            } finally {
+                setPasswordChangeLoading(false);
+            }
+        };
+
+        const closePasswordModal = () => {
+            setShowPasswordModal(false);
+            setSelectedTeacher(null);
+            setNewPassword('');
+            setShowNewPassword(false);
+        };
+
         return (
-          <div className="space-y-4">
-            {teachers.map(teacher => (
-              <div key={teacher._id} className="p-4 border rounded flex justify-between items-center">
-                <div>
-                  <p className="font-medium">{teacher.firstName} {teacher.lastName}</p>
-                  <p className="text-sm text-gray-600">Subject: {teacher.subject}</p>
-                  <p className={`text-sm ${teacher.isActive ? 'text-green-600' : 'text-red-500'}`}>
-                    {teacher.isActive ? 'Active' : 'Deactivated'}
-                  </p>
-                </div>
-                <div>
-                  {teacher.isActive ? (
-                    <button
-                      onClick={() => handleDeactivate(teacher._id)}
-                      className="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600"
-                    >
-                      {status[teacher._id] === 'loading' ? 'Processing...' : 'Deactivate'}
-                    </button>
-                  ) : (
-                    <span className="text-sm text-gray-400 italic">Already deactivated</span>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
+            <div className="space-y-4">
+                {teachers.map(teacher => (
+                    <div key={teacher._id} className="p-4 border rounded flex justify-between items-center">
+                        <div>
+                            <p className="font-medium">{teacher.firstName} {teacher.lastName}</p>
+                            <p className="text-sm text-gray-600">Subject: {teacher.subject}</p>
+                            <p className="text-sm text-gray-600">Username: {teacher.username}</p>
+                            <p className={`text-sm ${teacher.isActive ? 'text-green-600' : 'text-red-500'}`}>
+                                {teacher.isActive ? 'Active' : 'Deactivated'}
+                            </p>
+                        </div>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => handleChangePassword(teacher)}
+                                className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
+                            >
+                                Change Password
+                            </button>
+                            {teacher.isActive ? (
+                                <button
+                                    onClick={() => handleDeactivate(teacher._id)}
+                                    className="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600"
+                                >
+                                    {status[teacher._id] === 'loading' ? 'Processing...' : 'Deactivate'}
+                                </button>
+                            ) : (
+                                <span className="text-sm text-gray-400 italic">Already deactivated</span>
+                            )}
+                        </div>
+                    </div>
+                ))}
+
+                {/* Password Change Modal */}
+                {showPasswordModal && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                        <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
+                            <h3 className="text-lg font-bold text-gray-800 mb-4">
+                                Change Password for {selectedTeacher?.firstName} {selectedTeacher?.lastName}
+                            </h3>
+                            <form onSubmit={handlePasswordSubmit} className="space-y-4">
+                                <div>
+                                    <label className="block text-gray-700 font-medium mb-2">
+                                        New Password
+                                    </label>
+                                    <div className="relative">
+                                        <input
+                                            type={showNewPassword ? "text" : "password"}
+                                            required
+                                            value={newPassword}
+                                            onChange={(e) => setNewPassword(e.target.value)}
+                                            placeholder="Enter new password"
+                                            className="w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 pr-10"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowNewPassword(!showNewPassword)}
+                                            className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700"
+                                        >
+                                            <FontAwesomeIcon 
+                                                icon={showNewPassword ? faEyeSlash : faEye} 
+                                                className="h-5 w-5"
+                                            />
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className="flex gap-3 justify-end">
+                                    <button
+                                        type="button"
+                                        onClick={closePasswordModal}
+                                        className="px-4 py-2 text-gray-600 bg-gray-200 rounded hover:bg-gray-300"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={passwordChangeLoading}
+                                        className="px-4 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700 disabled:bg-emerald-400"
+                                    >
+                                        {passwordChangeLoading ? 'Changing...' : 'Change Password'}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
+            </div>
         );
-      }
+    }
 
     return (
         <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4 py-20">
