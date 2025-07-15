@@ -15,6 +15,11 @@ function PortalAttendance() {
   const [finalizeSuccess, setFinalizeSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const [finalizeError, setFinalizeError] = useState('');
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [studentsPerPage] = useState(10);
+  
   const token = sessionStorage.getItem('token');
 
   useEffect(() => {
@@ -55,7 +60,10 @@ function PortalAttendance() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const data = await res.json();
-      if (res.ok) setFiltered(data);
+      if (res.ok) {
+        setFiltered(data);
+        setCurrentPage(1); // Reset to first page on new search
+      }
       else console.error(data.error || 'Search failed.');
     } catch (err) {
       console.error('Error searching students:', err);
@@ -76,7 +84,6 @@ function PortalAttendance() {
     }, 
   []);
 
-
   const handleAttendanceChange = (admissionNum, subject, status) => {
     setPendingAttendance(prev => {
       const withoutCurrent = prev.filter(
@@ -94,7 +101,32 @@ function PortalAttendance() {
     });
   };
 
-  const allSelected = filtered.every(student =>
+  const getFilteredSortedRoster = () => {
+    let result = filtered;
+    if (filterForm) result = result.filter(s => s.form === Number(filterForm));
+    return result.sort((a, b) => {
+      switch (sortBy) {
+        case 'form':
+          return a.form - b.form;
+        case 'dateOfBirth':
+          return new Date(a.dateOfBirth) - new Date(b.dateOfBirth);
+        case 'name':
+        default:
+          return `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`);
+      }
+    });
+  };
+
+  const displayRoster = getFilteredSortedRoster();
+  
+  // Pagination calculations
+  const totalPages = Math.ceil(displayRoster.length / studentsPerPage);
+  const startIndex = (currentPage - 1) * studentsPerPage;
+  const endIndex = startIndex + studentsPerPage;
+  const currentStudents = displayRoster.slice(startIndex, endIndex);
+
+  // Check if all students across all pages have attendance selected
+  const allSelected = displayRoster.every(student =>
     student.subjects.every(subject => {
       if (!isAdmin && !teacherSubjects.includes(subject)) return true;
 
@@ -131,24 +163,60 @@ function PortalAttendance() {
     }
   };
 
-  const getFilteredSortedRoster = () => {
-    let result = filtered;
-    if (filterForm) result = result.filter(s => s.form === Number(filterForm));
-    return result.sort((a, b) => {
-      switch (sortBy) {
-        case 'form':
-          return a.form - b.form;
-        case 'dateOfBirth':
-          return new Date(a.dateOfBirth) - new Date(b.dateOfBirth);
-        case 'name':
-        default:
-          return `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`);
-      }
-    });
+  // Pagination handlers
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
   };
 
+  const handlePrevious = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handleNext = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterForm, sortBy]);
+
   const uniqueForms = [...new Set(roster.map(s => s.form))].sort((a, b) => a - b);
-  const displayRoster = getFilteredSortedRoster();
+
+  // Generate page numbers for pagination
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+    
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      const start = Math.max(1, currentPage - 2);
+      const end = Math.min(totalPages, start + maxVisiblePages - 1);
+      
+      for (let i = start; i <= end; i++) {
+        pages.push(i);
+      }
+      
+      if (start > 1) {
+        pages.unshift('...');
+        pages.unshift(1);
+      }
+      
+      if (end < totalPages) {
+        pages.push('...');
+        pages.push(totalPages);
+      }
+    }
+    
+    return pages;
+  };
 
   return (
     <section className="pt-40 pb-20 px-4 max-w-6xl mx-auto">
@@ -178,7 +246,9 @@ function PortalAttendance() {
 
       <div className="bg-white rounded-lg shadow-lg p-6">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
-          <h2 className="text-2xl font-semibold text-gray-800">Roster ({displayRoster.length} students)</h2>
+          <h2 className="text-2xl font-semibold text-gray-800">
+            Roster ({displayRoster.length} students)
+          </h2>
           <div className="flex flex-col sm:flex-row gap-3">
             <select
               value={filterForm}
@@ -202,8 +272,15 @@ function PortalAttendance() {
           </div>
         </div>
 
-        {displayRoster.map((student, idx) => (
-          <div key={idx} className="border rounded-lg shadow-sm mb-4">
+        {/* Pagination info */}
+        {displayRoster.length > 0 && (
+          <div className="mb-4 text-sm text-gray-600">
+            Showing {startIndex + 1} to {Math.min(endIndex, displayRoster.length)} of {displayRoster.length} students
+          </div>
+        )}
+
+        {currentStudents.map((student, idx) => (
+          <div key={student.admissionNum} className="border rounded-lg shadow-sm mb-4">
             <div
               className="p-4 cursor-pointer hover:bg-gray-50 hover:rounded-lg"
               onClick={() => toggleStudentExpansion(student.admissionNum)}
@@ -261,6 +338,57 @@ function PortalAttendance() {
             )}
           </div>
         ))}
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mt-6 pt-4 border-t">
+            <div className="text-sm text-gray-600">
+              Page {currentPage} of {totalPages}
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handlePrevious}
+                disabled={currentPage === 1}
+                className={`px-3 py-2 rounded-md text-sm font-medium transition ${
+                  currentPage === 1
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                Previous
+              </button>
+              
+              {getPageNumbers().map((page, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => typeof page === 'number' && handlePageChange(page)}
+                  disabled={page === '...'}
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition ${
+                    page === currentPage
+                      ? 'bg-emerald-600 text-white'
+                      : page === '...'
+                      ? 'bg-white text-gray-400 cursor-default'
+                      : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+              
+              <button
+                onClick={handleNext}
+                disabled={currentPage === totalPages}
+                className={`px-3 py-2 rounded-md text-sm font-medium transition ${
+                  currentPage === totalPages
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
 
         {rosterLoading && (
           <div className="flex items-center justify-center py-12">
