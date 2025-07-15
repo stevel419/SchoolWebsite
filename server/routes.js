@@ -625,6 +625,7 @@ const bucketName = process.env.S3_BUCKET;
 // S3 keys for JSON files
 const SLIDES_JSON_KEY = 'data/slides.json';
 const STAFF_JSON_KEY = 'data/staff.json';
+const EXAM_RESULTS_JSON_KEY = 'data/examResults.json';
 
 // Configure multer with S3 storage
 const upload = multer({
@@ -827,6 +828,39 @@ router.delete('/delete-staff/:index', async (req, res) => {
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: 'Error deleting staff' });
+  }
+});
+
+// Get all exam results
+router.get('/get-exam-results', async (req, res) => {
+  try {
+    const results = await readJsonFromS3(EXAM_RESULTS_JSON_KEY);
+    // Ensure we return an array
+    if (!Array.isArray(results)) {
+      return res.json([]);
+    }
+    res.json(results);
+  } catch (error) {
+    console.error('[GET /get-exam-results] Error:', error);
+    res.status(500).json({ error: 'Failed to read exam results' });
+  }
+});
+
+// Update exam results
+router.post('/update-exam-results', async (req, res) => {
+  try {
+    const { results } = req.body;
+    
+    // Validate that results is an array
+    if (!Array.isArray(results)) {
+      return res.status(400).json({ error: 'Results must be an array' });
+    }
+    
+    await writeJsonToS3(EXAM_RESULTS_JSON_KEY, results);
+    res.sendStatus(200);
+  } catch (error) {
+    console.error('[POST /update-exam-results] Error:', error);
+    res.status(500).json({ error: 'Failed to update exam results' });
   }
 });
 
@@ -1199,34 +1233,6 @@ router.get('/exam-results', authenticateJWT, async (req, res) => {
   } catch (err) {
       console.error(err);
       res.status(500).json({ error: 'Failed to compute exam results' });
-  }
-});
-
-const fs = require('fs')
-
-const examResultsPath = path.join(__dirname, 'data', 'examResults.json');
-
-router.get('/get-exam-results', (req, res) => {
-  try {
-    if (!fs.existsSync(examResultsPath)) return res.json([]);
-    const data = fs.readFileSync(examResultsPath, 'utf8');
-    const parsed = JSON.parse(data);
-    if (!Array.isArray(parsed)) return res.json([]);
-    res.json(parsed);
-  } catch (err) {
-    console.error('[GET /get-exam-results] Error:', err);
-    res.status(500).json({ error: 'Failed to read exam results' });
-  }
-});
-
-router.post('/update-exam-results', (req, res) => {
-  try {
-    const { results } = req.body;
-    fs.writeFileSync(examResultsPath, JSON.stringify(results, null, 2));
-    res.sendStatus(200);
-  } catch (err) {
-    console.error('[POST /update-exam-results] Error:', err);
-    res.status(500).json({ error: 'Failed to update exam results' });
   }
 });
 
