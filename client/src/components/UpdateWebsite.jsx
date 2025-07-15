@@ -212,7 +212,7 @@ function UpdateWebsite() {
             type="text"
             value={newLink}
             onChange={e => setNewLink(e.target.value)}
-            placeholder="PDF link or S3 URL"
+            placeholder="NECTA Exam Result Link"
             className="p-2 border rounded-lg flex-grow"
           />
           <button

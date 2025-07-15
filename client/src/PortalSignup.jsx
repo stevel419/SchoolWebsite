@@ -216,7 +216,7 @@ function PortalSignup() {
                                     </button>
                                 ) : (
                                     <div className="flex items-center px-4 py-2 text-sm text-gray-400 bg-gray-100 rounded-md border border-gray-200 whitespace-nowrap">
-                                        Already deactivated
+                                        Deactivated
                                     </div>
                                 )}
                             </div>
@@ -405,7 +405,7 @@ function PortalSignup() {
                                 required
                                 value={subject}
                                 onChange={(e) => setSubject(e.target.value)}
-                                placeholder="Enter subject (e.g., Mathematics, English, Science)"
+                                placeholder="Ex: Subject-Last Name or None (if admin)"
                                 className="w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                             />
                         </div>
