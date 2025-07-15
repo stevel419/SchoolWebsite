@@ -50,7 +50,7 @@ const Slideshow = () => {
                 <img
                   src={encodeURI(slide.image)}
                   alt={`Slide ${index + 1}`}
-                  className="max-w-full max-h-full object-cover object-center"
+                  className="max-w-full max-h-full object-cover"
                 />
               </div>
   
