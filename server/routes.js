@@ -1203,6 +1203,8 @@ router.get('/exam-results', authenticateJWT, async (req, res) => {
   }
 });
 
+const fs = require('fs')
+
 const examResultsPath = path.join(__dirname, 'data', 'examResults.json');
 
 router.get('/get-exam-results', (req, res) => {
