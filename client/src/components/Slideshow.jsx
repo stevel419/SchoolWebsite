@@ -46,11 +46,11 @@ const Slideshow = () => {
           {slides.map((slide, index) => (
             <div key={index} className="flex flex-col md:flex-row w-full h-full min-w-full">
               {/* Image section */}
-              <div className="w-full md:w-2/3 h-1/2 md:h-full order-1 md:order-1">
+              <div className="w-full md:w-2/3 h-1/2 md:h-full order-1 md:order-1 flex items-center justify-center bg-gray-100">
                 <img
                   src={encodeURI(slide.image)}
                   alt={`Slide ${index + 1}`}
-                  className="w-full h-full object-cover"
+                  className="max-w-full max-h-full object-cover object-center"
                 />
               </div>
   
