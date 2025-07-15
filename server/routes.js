@@ -7,7 +7,7 @@ const { Teacher, Student, Grade, Attendance, Comment } = require('./schemas.js')
 const authenticateJWT = require('./middleware/authMiddleware.js');
 const s3 = require('./config/s3Client.js');
 const puppeteer = require('puppeteer');
-const { S3Client, PutObjectCommand, HeadObjectCommand } = require('@aws-sdk/client-s3');
+const { GetObjectCommand, DeleteObjectCommand, PutObjectCommand, HeadObjectCommand } = require('@aws-sdk/client-s3');
 
 router.post('/create-user', async (req, res) => {
     try {
@@ -618,79 +618,144 @@ router.post('/submit-application', async (req, res) => {
   doc.end();
 });
 
-
-const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
+const multer = require('multer');
+const multerS3 = require('multer-s3');
+const bucketName = process.env.S3_BUCKET;
+// S3 keys for JSON files
+const SLIDES_JSON_KEY = 'data/slides.json';
+const STAFF_JSON_KEY = 'data/staff.json';
 
-// ------------------------
-// Multer setup to save into public/
-// ------------------------
-const destinationPath = path.join(__dirname, '../public')
-console.log('Saving uploaded files to:', destinationPath)
+// Configure multer with S3 storage
+const upload = multer({
+  storage: multerS3({
+    s3: s3,
+    bucket: bucketName,
+    acl: 'public-read',
+    key: function (req, file, cb) {
+      let folder = '';
+      if (req.route.path.includes('slide')) {
+        folder = 'slides/';
+      } else if (req.route.path.includes('staff')) {
+        folder = 'staff/';
+      }
+      
+      const fileName = `${folder}${Date.now()}-${file.originalname}`;
+      cb(null, fileName);
+    }
+  }),
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed!'), false);
+    }
+  }
+});
 
-const storage = multer.diskStorage({
-    destination: path.join(__dirname, '../client/public'),
-    filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`)
-  });
-const upload = multer({ storage });
-
-const slidesFile = path.join(__dirname, 'data', 'slides.json');
-const staffFile = path.join(__dirname, 'data', 'staff.json');
-
-// ------------------------
-// Helper functions
-// ------------------------
-function readJson(filePath) {
+// Helper function to read JSON from S3
+async function readJsonFromS3(key) {
   try {
-    return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-  } catch (e) {
-    return [];
+    const command = new GetObjectCommand({
+      Bucket: bucketName,
+      Key: key
+    });
+    
+    const result = await s3.send(command);
+    const bodyContents = await streamToString(result.Body);
+    return JSON.parse(bodyContents);
+  } catch (error) {
+    if (error.name === 'NoSuchKey') {
+      console.log(`File ${key} not found in S3, returning empty array`);
+      return [];
+    }
+    throw error;
   }
 }
 
-function writeJson(filePath, data) {
-  fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+// Helper function to convert stream to string
+async function streamToString(stream) {
+  const chunks = [];
+  return new Promise((resolve, reject) => {
+    stream.on('data', (chunk) => chunks.push(chunk));
+    stream.on('error', reject);
+    stream.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
+  });
 }
 
-// ------------------------
-// Get all slides
-// ------------------------
-router.get('/get-slides', (req, res) => {
-
+// Helper function to write JSON to S3
+async function writeJsonToS3(key, data) {
   try {
-    res.status(200).json(readJson(slidesFile));
+    const command = new PutObjectCommand({
+      Bucket: bucketName,
+      Key: key,
+      Body: JSON.stringify(data, null, 2),
+      ContentType: 'application/json'
+    });
+    
+    await s3.send(command);
+    console.log(`Successfully saved ${key} to S3`);
+  } catch (error) {
+    console.error(`Error saving ${key} to S3:`, error);
+    throw error;
+  }
+}
+
+// Helper function to delete file from S3
+async function deleteFromS3(fileUrl) {
+  try {
+    const key = fileUrl.split('.com/')[1];
+    
+    const command = new DeleteObjectCommand({
+      Bucket: bucketName,
+      Key: key
+    });
+    
+    await s3.send(command);
+    console.log(`Successfully deleted ${key} from S3`);
+  } catch (error) {
+    console.error('Error deleting from S3:', error);
+  }
+}
+
+// Get all slides
+router.get('/get-slides', async (req, res) => {
+  try {
+    const slides = await readJsonFromS3(SLIDES_JSON_KEY);
+    res.status(200).json(slides);
   } catch (e) {
+    console.error('Error reading slides from S3:', e);
     res.status(500).json({ error: 'Error reading slides file' });
   }
 });
 
-// ------------------------
 // Get all staff
-// ------------------------
-router.get('/get-staff', (req, res) => {
+router.get('/get-staff', async (req, res) => {
   try {
-    res.status(200).json(readJson(staffFile));
+    const staff = await readJsonFromS3(STAFF_JSON_KEY);
+    res.status(200).json(staff);
   } catch (e) {
+    console.error('Error reading staff from S3:', e);
     res.status(500).json({ error: 'Error reading staff file' });
   }
 });
 
-// ------------------------
 // Add new slide
-// ------------------------
-router.post('/add-slide', upload.single('image'), (req, res) => {
-    console.log('req.file:', req.file); // debug output
+router.post('/add-slide', upload.single('image'), async (req, res) => {
+  console.log('req.file:', req.file);
 
   if (!req.file || !req.body.text) {
     return res.status(400).json({ error: 'Missing image or text' });
   }
 
   try {
-    const filePath = `/${req.file.filename}`; // public/filename
-    const slides = readJson(slidesFile);
+    const filePath = req.file.location; // S3 URL
+    const slides = await readJsonFromS3(SLIDES_JSON_KEY);
     slides.push({ image: filePath, text: req.body.text });
-    writeJson(slidesFile, slides);
+    await writeJsonToS3(SLIDES_JSON_KEY, slides);
     res.status(200).json({ message: 'Slide added successfully' });
   } catch (e) {
     console.error(e);
@@ -698,24 +763,23 @@ router.post('/add-slide', upload.single('image'), (req, res) => {
   }
 });
 
-// ------------------------
 // Delete slide by index
-// ------------------------
-router.delete('/delete-slide/:index', (req, res) => {
+router.delete('/delete-slide/:index', async (req, res) => {
   try {
     const index = parseInt(req.params.index, 10);
-    const slides = readJson(slidesFile);
+    const slides = await readJsonFromS3(SLIDES_JSON_KEY);
 
     if (isNaN(index) || index < 0 || index >= slides.length) {
       return res.status(400).json({ error: 'Invalid index' });
     }
 
     const [deletedSlide] = slides.splice(index, 1);
-    writeJson(slidesFile, slides);
+    await writeJsonToS3(SLIDES_JSON_KEY, slides);
 
-    // Delete image file
-    const filePath = path.join(__dirname, '../public', path.basename(deletedSlide.image));
-    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    // Delete image from S3
+    if (deletedSlide.image && deletedSlide.image.includes('amazonaws.com')) {
+      await deleteFromS3(deletedSlide.image);
+    }
 
     res.status(200).json({ message: 'Slide deleted successfully' });
   } catch (e) {
@@ -724,19 +788,17 @@ router.delete('/delete-slide/:index', (req, res) => {
   }
 });
 
-// ------------------------
 // Add new staff
-// ------------------------
-router.post('/add-staff', upload.single('image'), (req, res) => {
+router.post('/add-staff', upload.single('image'), async (req, res) => {
   if (!req.file || !req.body.name || !req.body.position) {
     return res.status(400).json({ error: 'Missing image, name, or position' });
   }
 
   try {
-    const filePath = `/${req.file.filename}`; // public/filename
-    const staff = readJson(staffFile);
+    const filePath = req.file.location; // S3 URL
+    const staff = await readJsonFromS3(STAFF_JSON_KEY);
     staff.push({ image: filePath, name: req.body.name, position: req.body.position });
-    writeJson(staffFile, staff);
+    await writeJsonToS3(STAFF_JSON_KEY, staff);
     res.status(200).json({ message: 'Staff added successfully' });
   } catch (e) {
     console.error(e);
@@ -744,24 +806,23 @@ router.post('/add-staff', upload.single('image'), (req, res) => {
   }
 });
 
-// ------------------------
 // Delete staff by index
-// ------------------------
-router.delete('/delete-staff/:index', (req, res) => {
+router.delete('/delete-staff/:index', async (req, res) => {
   try {
     const index = parseInt(req.params.index, 10);
-    const staff = readJson(staffFile);
+    const staff = await readJsonFromS3(STAFF_JSON_KEY);
 
     if (isNaN(index) || index < 0 || index >= staff.length) {
       return res.status(400).json({ error: 'Invalid index' });
     }
 
     const [deletedStaff] = staff.splice(index, 1);
-    writeJson(staffFile, staff);
+    await writeJsonToS3(STAFF_JSON_KEY, staff);
 
-    // Delete image file
-    const filePath = path.join(__dirname, '../public', path.basename(deletedStaff.image));
-    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    // Delete image from S3
+    if (deletedStaff.image && deletedStaff.image.includes('amazonaws.com')) {
+      await deleteFromS3(deletedStaff.image);
+    }
 
     res.status(200).json({ message: 'Staff deleted successfully' });
   } catch (e) {
