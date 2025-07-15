@@ -4,7 +4,7 @@ const LandingAdmission = () => {
   return (
     <section
       className="w-full h-[75vh] bg-cover bg-center bg-no-repeat relative text-black flex items-center justify-center px-4"
-      style={{ backgroundImage: "url('/schoolTempBackground.jpg')" }}
+      style={{ backgroundImage: "url('/landingAdmission.jpg')" }}
     >
       <div className="pt-12">
         <div className="bg-white/70 backdrop-blur-sm p-8 rounded-xl text-center w-full max-w-xl">

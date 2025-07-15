@@ -7,7 +7,7 @@ const Landing = () => {
   return (
     <section
       className="w-full h-[85vh] md:h-screen bg-cover bg-bottom bg-no-repeat relative text-white flex flex-col justify-between"
-      style={{ backgroundImage: "url('/schoolTempBackground.jpg')" }}
+      style={{ backgroundImage: "url('/landingHome.jpg')" }}
     >
       {/* Hero Title */}
       <div className="flex-grow flex items-center justify-center bg-black/40 px-4">
