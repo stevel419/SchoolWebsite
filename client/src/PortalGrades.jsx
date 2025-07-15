@@ -363,6 +363,18 @@ function PortalGrades() {
         setExpandedStudents(new Set());
     };
 
+    const handlePrevious = () => {
+        if (currentPage > 1) {
+            setCurrentPage(currentPage - 1);
+        }
+    };
+
+    const handleNext = () => {
+        if (currentPage < totalPages) {
+            setCurrentPage(currentPage + 1);
+        }
+    };
+
     const uniqueForms = [...new Set(roster.map(student => student.form))].sort();
     const allSubjects = getAllSubjects();
     const filteredRoster = getFilteredAndSortedRoster();
@@ -381,93 +393,35 @@ function PortalGrades() {
         }
     }, [sortBy]);
 
-    // Pagination component
-    const PaginationControls = () => {
-        if (totalPages <= 1) return null;
-
-        const getPageNumbers = () => {
-            const pages = [];
-            const maxVisiblePages = 5;
-            
-            if (totalPages <= maxVisiblePages) {
-                for (let i = 1; i <= totalPages; i++) {
-                    pages.push(i);
-                }
-            } else {
-                if (currentPage <= 3) {
-                    for (let i = 1; i <= 4; i++) {
-                        pages.push(i);
-                    }
-                    pages.push('...');
-                    pages.push(totalPages);
-                } else if (currentPage >= totalPages - 2) {
-                    pages.push(1);
-                    pages.push('...');
-                    for (let i = totalPages - 3; i <= totalPages; i++) {
-                        pages.push(i);
-                    }
-                } else {
-                    pages.push(1);
-                    pages.push('...');
-                    for (let i = currentPage - 1; i <= currentPage + 1; i++) {
-                        pages.push(i);
-                    }
-                    pages.push('...');
-                    pages.push(totalPages);
-                }
+    // Generate page numbers for pagination
+    const getPageNumbers = () => {
+        const pages = [];
+        const maxVisiblePages = 5;
+        
+        if (totalPages <= maxVisiblePages) {
+            for (let i = 1; i <= totalPages; i++) {
+                pages.push(i);
             }
-            return pages;
-        };
-
-        return (
-            <div className="flex items-center justify-between mt-6 px-4">
-                <div className="text-sm text-gray-600">
-                    Showing {(currentPage - 1) * studentsPerPage + 1} to {Math.min(currentPage * studentsPerPage, filteredRoster.length)} of {filteredRoster.length} students
-                </div>
-                <div className="flex items-center space-x-2">
-                    <button
-                        onClick={() => handlePageChange(currentPage - 1)}
-                        disabled={currentPage === 1}
-                        className={`px-3 py-1 rounded-md text-sm font-medium ${
-                            currentPage === 1
-                                ? 'text-gray-400 cursor-not-allowed'
-                                : 'text-emerald-600 hover:bg-emerald-50'
-                        }`}
-                    >
-                        Previous
-                    </button>
-                    
-                    {getPageNumbers().map((page, index) => (
-                        <button
-                            key={index}
-                            onClick={() => typeof page === 'number' && handlePageChange(page)}
-                            disabled={page === '...'}
-                            className={`px-3 py-1 rounded-md text-sm font-medium ${
-                                page === currentPage
-                                    ? 'bg-emerald-600 text-white'
-                                    : page === '...'
-                                    ? 'text-gray-400 cursor-default'
-                                    : 'text-gray-600 hover:bg-emerald-50'
-                            }`}
-                        >
-                            {page}
-                        </button>
-                    ))}
-                    
-                    <button
-                        onClick={() => handlePageChange(currentPage + 1)}
-                        disabled={currentPage === totalPages}
-                        className={`px-3 py-1 rounded-md text-sm font-medium ${
-                            currentPage === totalPages
-                                ? 'text-gray-400 cursor-not-allowed'
-                                : 'text-emerald-600 hover:bg-emerald-50'
-                        }`}
-                    >
-                        Next
-                    </button>
-                </div>
-            </div>
-        );
+        } else {
+            const start = Math.max(1, currentPage - 2);
+            const end = Math.min(totalPages, start + maxVisiblePages - 1);
+            
+            for (let i = start; i <= end; i++) {
+                pages.push(i);
+            }
+            
+            if (start > 1) {
+                pages.unshift('...');
+                pages.unshift(1);
+            }
+            
+            if (end < totalPages) {
+                pages.push('...');
+                pages.push(totalPages);
+            }
+        }
+        
+        return pages;
     };
 
     return (
@@ -555,6 +509,13 @@ function PortalGrades() {
                         )}
                     </div>
                 </div>
+
+                {/* Pagination info */}
+                {filteredRoster.length > 0 && (
+                    <div className="mb-4 text-sm text-gray-600">
+                        Showing {(currentPage - 1) * studentsPerPage + 1} to {Math.min(currentPage * studentsPerPage, filteredRoster.length)} of {filteredRoster.length} students
+                    </div>
+                )}
 
                 {paginatedRoster.length > 0 && (
                     <div className="space-y-3">
@@ -652,7 +613,55 @@ function PortalGrades() {
                 )}
 
                 {/* Pagination Controls */}
-                <PaginationControls />
+                {totalPages > 1 && (
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mt-6 pt-4 border-t">
+                        <div className="text-sm text-gray-600">
+                            Page {currentPage} of {totalPages}
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={handlePrevious}
+                                disabled={currentPage === 1}
+                                className={`px-3 py-2 rounded-md text-sm font-medium transition ${
+                                    currentPage === 1
+                                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                        : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                                }`}
+                            >
+                                Previous
+                            </button>
+                            
+                            {getPageNumbers().map((page, idx) => (
+                                <button
+                                    key={idx}
+                                    onClick={() => typeof page === 'number' && handlePageChange(page)}
+                                    disabled={page === '...'}
+                                    className={`px-3 py-2 rounded-md text-sm font-medium transition ${
+                                        page === currentPage
+                                            ? 'bg-emerald-600 text-white'
+                                            : page === '...'
+                                            ? 'bg-white text-gray-400 cursor-default'
+                                            : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                                    }`}
+                                >
+                                    {page}
+                                </button>
+                            ))}
+                            
+                            <button
+                                onClick={handleNext}
+                                disabled={currentPage === totalPages}
+                                className={`px-3 py-2 rounded-md text-sm font-medium transition ${
+                                    currentPage === totalPages
+                                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                        : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                                }`}
+                            >
+                                Next
+                            </button>
+                        </div>
+                    </div>
+                )}
 
                 {rosterLoading && (
                     <div className="flex items-center justify-center py-12">
