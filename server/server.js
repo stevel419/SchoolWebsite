@@ -24,12 +24,33 @@ app.use(helmet({
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.tailwindcss.com", "https://unpkg.com", "https://calendar.google.com"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.tailwindcss.com", "https://cdnjs.cloudflare.com", "https://calendar.google.com"],
-      imgSrc: ["'self'", "data:", "blob:", "https://calendar.google.com", "https://ssl.gstatic.com"],
-      connectSrc: ["'self'", "https://calendar.google.com", "https://accounts.google.com"],
+      imgSrc: [
+        "'self'", 
+        "data:", 
+        "blob:", 
+        "https://calendar.google.com", 
+        "https://ssl.gstatic.com",
+        "https://*.amazonaws.com", // Allow images from S3
+        `https://${process.env.S3_BUCKET}.s3.amazonaws.com`, // Specific bucket
+        `https://${process.env.S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com` // Region-specific
+      ],
+      connectSrc: [
+        "'self'", 
+        "https://calendar.google.com", 
+        "https://accounts.google.com",
+        "https://*.amazonaws.com", // Allow API calls to S3
+        `https://${process.env.S3_BUCKET}.s3.amazonaws.com`,
+        `https://${process.env.S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com`
+      ],
       frameSrc: ["'self'", "https://calendar.google.com"],
       fontSrc: ["'self'", "https://cdnjs.cloudflare.com", "https://fonts.googleapis.com", "https://fonts.gstatic.com"],
       objectSrc: ["'none'"],
-      mediaSrc: ["'self'"],
+      mediaSrc: [
+        "'self'",
+        "https://*.amazonaws.com", // Allow media from S3
+        `https://${process.env.S3_BUCKET}.s3.amazonaws.com`,
+        `https://${process.env.S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com`
+      ],
       workerSrc: ["'self'"],
       childSrc: ["'self'", "https://calendar.google.com"],
       formAction: ["'self'"]
