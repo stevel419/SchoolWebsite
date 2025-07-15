@@ -631,7 +631,6 @@ const upload = multer({
   storage: multerS3({
     s3: s3,
     bucket: bucketName,
-    acl: 'public-read',
     key: function (req, file, cb) {
       let folder = '';
       if (req.route.path.includes('slide')) {
