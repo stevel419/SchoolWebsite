@@ -589,7 +589,7 @@ router.post('/submit-application', async (req, res) => {
     try {
       await transporter.sendMail({
         from: `"Kiguruyembe School" <${process.env.EMAIL_USER}>`,
-        to: 'i.mathew160@gmail.com', // Change to actual recipient
+        to: 'kigurunyembess@gmail.com', // Change to actual recipient
         subject: 'New Application Submission',
         text: `New application from ${firstName} ${lastName}`,
         attachments: [{
